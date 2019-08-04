@@ -1,0 +1,25 @@
+{
+  "name": "starmusic",
+  "version": "1.0.0",
+  "description": "Reproduce tu música fácilmente y en español y sin complicaciones.",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DavichoStar/starmusic.git"
+  },
+  "keywords": [
+    "music",
+    "español",
+    "discord",
+    "youtube-discord"
+  ],
+  "author": "DavichoStar",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/DavichoStar/starmusic/issues"
+  },
+  "homepage": "https://github.com/DavichoStar/starmusic#readme"
+}
