@@ -2,7 +2,10 @@
   "name": "starmusic",
   "version": "1.0.0",
   "description": "Reproduce tu música fácilmente y en español y sin complicaciones.",
-  "main": "index.js",
+  "main": "./js/index.js",
+  "typescript": {
+    "main": "./ts/index.ts"
+  },
   "scripts": {
     "build": "tsc"
   },
