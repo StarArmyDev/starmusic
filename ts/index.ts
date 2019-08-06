@@ -1,17 +1,24 @@
+/* ========================================================== */
+/*                         StarMusic                          */
+/* ========================================================== */
+/*                                                            */
+/*                      DavichoStar#8104                      */
+/*       Servidor de Soporte: https://discord.gg/DsYhNKd      */
+/*                                                            */
+/* ========================================================== */
 import Discord = require('discord.js');
 import ytdl = require('ytdl-core');
 import ytpl = require('ytpl');
 import Lautfm = require('lautfm');
 import fetchVideoInfo = require("youtube-info");
 import yts = require('ytsearcher');
-import { Resolver } from 'dns';
 const YTSearcher = yts.YTSearcher;
 const laut = new Lautfm();
 
 interface MusicOpts {
     servidores?: Map<any, any>;
     embedColor?: string;
-    youtubeKey?: string;
+    youtubeKey: string;
     radio?: string;
     volumenDef?: number;
     colaMax?: number;
@@ -25,6 +32,15 @@ interface MusicOpts {
     cualquieraOmite?: boolean;
     mensajeNuevaCancion?: boolean;
     mostrarNombre?: boolean;
+}
+
+interface ServerOpts {
+    canciones: Array<any>,
+    ultima: any,
+    repetir: "Ninguna" | "canción" | "todo",
+    id: string,
+    volumen: number,
+    isPlaying: boolean;
 }
 
 const conv = (dinero: string) => String(dinero).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
@@ -65,7 +81,7 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
             removerFunction!: (msg: Discord.Message, args: any) => any;
             
             play!: (msg: Discord.Message, servidores: any) => void;
-            buscar_info!: (msg: Discord.Message, res: any, cola?: any) => void;
+            buscar_info!: (msg: Discord.Message, res: any, cola?: boolean) => void;
             agregado_a_cola!: (msg: any, res: any) => void;
             mensaje!: (msg: any, res: any) => Promise<void>;
             reproductor!: (msg: any, res: any) => Promise<void>;
@@ -178,7 +194,7 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
                 });
             if (musicbot.soloDj && musicbot.isDj(msg.member)) return msg.channel.send(musicbot.note('fail', 'No tienes permitido reproducír música.'));
 
-            const servidores = musicbot.servidores.get(msg.guild.id);
+            const servidores: ServerOpts = musicbot.servidores.get(msg.guild.id);
             if (servidores.canciones.length >= musicbot.colaMax && musicbot.colaMax !== 0) return msg.channel.send(musicbot.note('fail', 'Tamaño máximo de cola alcanzado'));
             var searchstring = args.trim();
 
@@ -278,7 +294,7 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
                     volumen: musicbot.volumenDef,
                     isPlaying: false
                 });
-            const servidores = musicbot.servidores.get(msg.guild.id);
+            const servidores: ServerOpts = musicbot.servidores.get(msg.guild.id);
             if (servidores.canciones.length >= musicbot.colaMax && musicbot.colaMax !== 0) return msg.channel.send(musicbot.note('fail', 'Tamaño máximo de cola alcanzado!'));
 
             let searchstring = args.trim();
@@ -319,8 +335,9 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
 
                                         if (mcon === "cancel" || mcon === "cancelar") return firstMsg.edit(musicbot.note('note', 'Búsqueda cancelada.'));
 
-                                        const song_number = parseInt(mcon) - 1;
-                                        if (song_number >= 0) {
+                                        const song_number: number = parseInt(mcon) - 1;
+                                        if (song_number >= 0)
+                                        {
                                             firstMsg.delete();
 
                                             let cancion = {
@@ -519,11 +536,11 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
 
         musicbot.omitirFunction = (msg: Discord.Message) => {
             const voiceConnection: Discord.VoiceConnection = client.voiceConnections.find(val => val.channel.guild.id == msg.guild.id);
-            const servidores = musicbot.servidores.get(msg.guild.id);
+            const servidores: ServerOpts = musicbot.servidores.get(msg.guild.id);
             let authorC = musicbot.servidores.get(msg.guild.id).ultima;
 
             if (voiceConnection === null)
-                return msg.channel.send(musicbot.note('fail', 'No se está buscar_info música.'));
+                return msg.channel.send(musicbot.note('fail', 'No se está reproduciendo música.'));
             if (!musicbot.canSkip(msg.member, servidores))
                 return msg.channel.send(musicbot.note('fail', `No puedes saltear esto porque no hay una cola de reproducción.`));
             if (authorC.autorID !== msg.author.id || (!musicbot.isAdmin(msg.member) && !musicbot.cualquieraOmite))
@@ -559,7 +576,7 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
 
         musicbot.npFunction = (msg: any) => {
             const voiceConnection: Discord.VoiceConnection = client.voiceConnections.find(val => val.channel.guild.id == msg.guild.id);
-            const servidores = musicbot.servidores.get(msg.guild.id);
+            const servidores: ServerOpts = musicbot.servidores.get(msg.guild.id);
             if (voiceConnection === null) return msg.channel.send(musicbot.note('fail', 'No hay Música sonando.'));
 
             if (servidores.canciones.length <= 0) return msg.channel.send(musicbot.note('note', 'Cola vacía.'));
@@ -894,7 +911,7 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
         };
 
         // ===============[ Funciones Internas ]=============== //
-        musicbot.buscar_info = (msg: Discord.Message, res: any, cola: any = false) => {
+        musicbot.buscar_info = (msg: Discord.Message, res: any, cola: boolean = false) => {
             fetchVideoInfo(res.id, async function (err: any, videoInfo: any) {
                 if (err) return console.error(err);
 
@@ -920,7 +937,7 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
         };
 
         musicbot.agregado_a_cola = (msg: any, res: any) => {
-            const servidores = musicbot.servidores.get(msg.guild.id);
+            const servidores: ServerOpts = musicbot.servidores.get(msg.guild.id);
             const resMem = client.users.get(res.autorID);
 
             if (msg.channel.permissionsFor(msg.guild.me).has('EMBED_LINKS')) {
@@ -961,7 +978,7 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
         };
 
         musicbot.mensaje = async (msg: any, res: any) => {
-            const servidores = musicbot.servidores.get(msg.guild.id);
+            const servidores: ServerOpts = musicbot.servidores.get(msg.guild.id);
             const resMem = client.users.get(res.autorID);
 
             if (msg.channel.permissionsFor(msg.guild.me).has('EMBED_LINKS')) {

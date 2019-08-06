@@ -1,5 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+/* ========================================================== */
+/*                         StarMusic                          */
+/* ========================================================== */
+/*                                                            */
+/*                      DavichoStar#8104                      */
+/*       Servidor de Soporte: https://discord.gg/DsYhNKd      */
+/*                                                            */
+/* ========================================================== */
 const Discord = require("discord.js");
 const ytdl = require("ytdl-core");
 const ytpl = require("ytpl");
@@ -454,7 +462,7 @@ exports.start = (client, options) => {
             const servidores = musicbot.servidores.get(msg.guild.id);
             let authorC = musicbot.servidores.get(msg.guild.id).ultima;
             if (voiceConnection === null)
-                return msg.channel.send(musicbot.note('fail', 'No se está buscar_info música.'));
+                return msg.channel.send(musicbot.note('fail', 'No se está reproduciendo música.'));
             if (!musicbot.canSkip(msg.member, servidores))
                 return msg.channel.send(musicbot.note('fail', `No puedes saltear esto porque no hay una cola de reproducción.`));
             if (authorC.autorID !== msg.author.id || (!musicbot.isAdmin(msg.member) && !musicbot.cualquieraOmite))
