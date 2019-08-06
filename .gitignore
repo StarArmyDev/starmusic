@@ -1,0 +1,14 @@
+# OS o carpetas del editor
+.DS_Store
+.cache
+.project
+.settings
+.tmproj
+nbproject
+Thumbs.db
+package-lock.json
+
+# Logs
+logs
+*.logs
+npm-debug.log*

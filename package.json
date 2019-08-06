@@ -1,6 +1,6 @@
 {
   "name": "starmusic",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Reproduce tu música fácilmente y en español y sin complicaciones.",
   "main": "./js/index.js",
   "typescript": {
@@ -17,10 +17,12 @@
     "music",
     "español",
     "discord",
+    "discord.js",
+    "bot",
     "youtube-discord"
   ],
   "author": "DavichoStar",
-  "license": "MIT",
+  "license": "ISC",
   "bugs": {
     "url": "https://github.com/DavichoStar/starmusic/issues"
   },
