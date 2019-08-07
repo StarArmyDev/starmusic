@@ -231,7 +231,7 @@ client.on('messages', (message) => {
     if (message.content.startsWith(prefix + "play"))
     {
         let args = message.content.slice(prefix.length + 4); //Aquí medimos nuestro prefix y sumamos 4 por el largo de "play"
-        client.music.play(message, args);
+        client.music.play(message, args.join(' '));
     }
 });
 
@@ -268,7 +268,7 @@ client.on('messages', (message) => {
     if (message.content.startsWith(prefix + "play"))
     {
         let args = message.content.slice(prefix.length + 4);
-        music.play(message, args);
+        music.play(message, args.join(' '));
     }
 });
 
