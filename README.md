@@ -1,6 +1,9 @@
 Módulo Fácil de imprementar para tu bot de Discord con el cual podrás crear Bots de música con respuestas en español para la librería de discord.js y tener incluso radio.
 
 ## Cambios
+v1.0.2
+* Corrección en el readme.
+
 v1.0.1
 * Se inició el proyecto con su respectiva guía básica.
 
@@ -48,6 +51,7 @@ const music = require('starmusic');
 
 ## Inicializar
 En su archivo principal del bot, `index.js` o `server.js` comúnmente, debe de iniciar el módulo antes de ser utilizado.
+
 ```js
 client.music.start(client, {
     youtubeKey: 'Tu YouTube Data API3 key'
@@ -56,6 +60,8 @@ client.music.start(client, {
 `.start()` recibe dos parámetros **client** que corresponde a tu variable del bot, **{opciones}** los cuales puedes revisar en esta tabla [aquí](#opciones)
 
 ## Usando las Funciones
+Para usar estas funciones, tienes que agregar *.bot* antes de la función, ve los ejemplos al final.
+**Ninguna de estas funciones requiere que realices validaciones como if(!args) o si el usuario está o no en un canal de voz, simplemente coloca la función ¡y listo!**
 
 <a name="play" />
 # Play
@@ -230,8 +236,8 @@ client.on('messages', (message) => {
     
     if (message.content.startsWith(prefix + "play"))
     {
-        let args = message.content.slice(prefix.length + 4); //Aquí medimos nuestro prefix y sumamos 4 por el largo de "play"
-        client.music.play(message, args.join(' '));
+        let args = message.content.slice(prefix.length + 4); //Aquí medimos nuestro prefix y sumamos 4 por el largo de la palabra "play"
+        client.music.bot.play(message, args.join(' '));
     }
 });
 
@@ -246,33 +252,13 @@ client.music.start(client, {
 client.login('token');
 
 ```
-Tambien puedes colocarloen una variable normal
 
+Si ocupas command Handling
 ```js
-//Declaramos nuestro módulos base
-const Discord = require('discord.js');
-const client = new Discord.Client();
-const prefix = "!";
-//Asignamos nuestro módulo a client
-const music = require('starmusic');
-
-client.on('ready', () => console.log('Encendido'));
-
-music.start(client, {
-    youtubeKey: 'TuApiKey'
-});
-
-client.on('messages', (message) => {
-    if (message.author.bot) return;
-    
-    if (message.content.startsWith(prefix + "play"))
-    {
-        let args = message.content.slice(prefix.length + 4);
-        music.play(message, args.join(' '));
-    }
-});
-
-client.login('token');
+module.exports.run = (cliebt, message, args) =>
+{
+    music.bot.salir(message);
+}
 
 ```
 
