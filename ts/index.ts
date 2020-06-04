@@ -182,13 +182,13 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
             }
 
             isAdmin(member: Discord.GuildMember): boolean {
-                if (member.id === member.guild.owner.id) return true;
-                else if (member.roles.find((r: Discord.Role) => this.adminRol.includes(r.id))) return true;
+                if (member.guild.owner && member.id == member.guild.owner.id) return true;
+                else if (member.roles.cache.find((r: Discord.Role) => this.adminRol.includes(r.id))) return true;
                 else return member.hasPermission("ADMINISTRATOR");
             }
 
             isDj(member: Discord.GuildMember): boolean {
-                if (member.roles.find((r: Discord.Role) => this.djRol.includes(r.id))) return true;
+                if (member.roles.cache.find((r: Discord.Role) => this.djRol.includes(r.id))) return true;
                 else return false;
             }
 
@@ -238,7 +238,7 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
         musicbot.searcher = new YTSearcher(musicbot.youtubeKey);
 
         musicbot.play = (msg: any, args: any) => {
-            if (msg.member.voiceChannel === undefined) return msg.channel.send(notaMsg('fail', `No estas en un canal de voz.`));
+            if (!msg.member.voice.channel) return msg.channel.send(notaMsg('fail', `No estas en un canal de voz.`));
             if (!args) return msg.channel.send(notaMsg('fail', '¡No hay video especificado!'));
 
             if (musicbot.servidores.has(msg.guild.id) && musicbot.servidores.get(msg.guild.id).isRadio)
@@ -258,27 +258,21 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
             if (servidores.canciones.length >= musicbot.colaMax && musicbot.colaMax !== 0) return msg.channel.send(notaMsg('fail', 'Tamaño máximo de cola alcanzado'));
             var searchstring = args.trim();
 
-            if (searchstring.startsWith('http') && searchstring.includes("list="))
-            {
+            if (searchstring.startsWith('http') && searchstring.includes("list=")) {
                 msg.channel.send(notaMsg("search", `Buscando elementos de la lista de reproducción~`));
                 var playid = searchstring.toString().split('list=')[1];
 
-                if (playid.toString().includes('?'))
-                    playid = playid.split('?')[0];
-                if (playid.toString().includes('&t='))
-                    playid = playid.split('&t=')[0];
+                if (playid.toString().includes('?')) playid = playid.split('?')[0];
+                if (playid.toString().includes('&t=')) playid = playid.split('&t=')[0];
 
-                ytpl(playid, function (err, playlist) {
-                    if (err)
-                        return msg.channel.send(notaMsg('fail', `Algo salió mal al buscar esa lista de reproducción`));
-                    if (playlist.items.length <= 0)
-                        return msg.channel.send(notaMsg('fail', `No se pudo obtener ningún video de esa lista de reproducción.`));
-                    if (playlist.total_items >= 50)
-                        return msg.channel.send(notaMsg('fail', `Demasiados videos para poner en cola. Se permite un máximo de 50..`));
+                ytpl(playid, (err, playlist) => {
+                    if (err) return msg.channel.send(notaMsg('fail', `Algo salió mal al buscar esa lista de reproducción`));
+                    if (playlist.items.length <= 0) return msg.channel.send(notaMsg('fail', `No se pudo obtener ningún video de esa lista de reproducción.`));
+                    if (playlist.total_items >= 50) return msg.channel.send(notaMsg('fail', `Demasiados videos para poner en cola. Se permite un máximo de 50..`));
                     var index = 0;
                     var ran = 0;
 
-                    playlist.items.forEach(video => {
+                    playlist.items.forEach((video) => {
                         ran++;
                         if (servidores.canciones.length == (musicbot.colaMax + 1) && musicbot.colaMax !== 0 || !video) return;
 
@@ -298,8 +292,7 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
 
                         servidores.canciones.push(cancion);
 
-                        if (servidores.canciones.length === 1)
-                            musicbot.iniciar(msg, servidores);
+                        if (servidores.canciones.length === 1) musicbot.iniciar(msg, servidores);
                         index++;
 
                         if (ran >= playlist.items.length) {
@@ -309,9 +302,7 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
                         }
                     });
                 });
-            }
-            else
-            {
+            } else {
                 if (searchstring.includes("https://youtu.be/") || searchstring.includes("https://www.youtube.com/") && searchstring.includes("&")) searchstring = searchstring.split("&")[0];
                 msg.channel.send(notaMsg("search", `\`Buscando: ${searchstring}\`...`));
 
@@ -329,15 +320,11 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
                     };
 
 
-                    if (servidores.canciones.find((c: any) => c.id == res.id))
-                        return msg.reply("Esa canción ya está en cola, espera a que acabe para escucharla otra vez.");
-                    else
-                        servidores.canciones.push(cancion);
+                    if (servidores.canciones.find((c: any) => c.id == res.id)) return msg.reply("Esa canción ya está en cola, espera a que acabe para escucharla otra vez.");
+                    else servidores.canciones.push(cancion);
 
-                    if (servidores.canciones.length === 1 || !client.voiceConnections.find(val => val.channel.guild.id == msg.guild.id))
-                        musicbot.iniciar(msg, servidores);
-                    else
-                        musicbot.buscar_info(msg, cancion, true);
+                    if (servidores.canciones.length === 1 || (client.voice && !client.voice.connections.find(val => val.channel.guild.id == msg.guild.id))) musicbot.iniciar(msg, servidores);
+                    else musicbot.buscar_info(msg, cancion, true);
                 }).catch((err: Error) => {
                     throw new Error(`error interno inesperado: ${err.stack}`);
                 });
@@ -345,7 +332,7 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
         };
 
         musicbot.busqueda = (msg: any, args: any) => {
-            if (msg.member.voiceChannel === undefined) return msg.channel.send(notaMsg('fail', `No estas en un canal de voz`));
+            if (!msg.member.voice.channel) return msg.channel.send(notaMsg('fail', `No estas en un canal de voz`));
             if (!args) return msg.channel.send(notaMsg('fail', 'No especificaste algo qué buscar'));
 
             if (musicbot.servidores.has(msg.guild.id) && musicbot.servidores.get(msg.guild.id).isRadio)
@@ -373,7 +360,7 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
 
                     const startTheFun = async (videos: any, max: any) => {
                         if (msg.channel.permissionsFor(msg.guild.me).has('EMBED_LINKS')) {
-                            const embed: Discord.RichEmbed = new Discord.RichEmbed();
+                            const embed: Discord.MessageEmbed = new Discord.MessageEmbed();
                             embed.setTitle(`Elige tu video`);
                             embed.setColor(musicbot.embedColor);
                             var index = 0;
@@ -381,7 +368,7 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
                                 index++;
                                 embed.addField(`${index} (${video.channelTitle})`, `[${notaMsg('font', video.title)}](${video.url})`, true);
                             });
-                            if (musicbot.mostrarNombre) embed.setFooter(`Buscado por: ${msg.author.username}`, msg.author.displayAvatarURL);
+                            if (musicbot.mostrarNombre) embed.setFooter(`Buscado por: ${msg.author.username}`, msg.author.displayAvatarURL());
 
                             msg.channel.send({ embed: embed }).then((firstMsg: any) => {
                                 const filter = (m: any) => {
@@ -421,10 +408,8 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
                                             };
                                             servidores.canciones.push(cancion);
 
-                                            if (servidores.canciones.length === 1 || !client.voiceConnections.find(val => val.channel.guild.id == msg.guild.id))
-                                                musicbot.iniciar(msg, servidores);
-                                            else
-                                                musicbot.buscar_info(msg, cancion, true);
+                                            if (servidores.canciones.length === 1 || (client.voice && !client.voice.connections.find(val => val.channel.guild.id == msg.guild.id))) musicbot.iniciar(msg, servidores);
+                                            else musicbot.buscar_info(msg, cancion, true);
                                         }
                                     }).catch((collected: any) => {
                                         if (collected.toString().match(/error|Error|TypeError|RangeError|Uncaught/)) return firstMsg.edit(`\`\`\`xl\nBúsqueda cancelada. ${collected}\n\`\`\``);
@@ -470,10 +455,8 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
                                             }
                                         };
                                         servidores.canciones.push(cancion);
-                                        if (servidores.canciones.length === 1 || !client.voiceConnections.find(val => val.channel.guild.id == msg.guild.id))
-                                            musicbot.iniciar(msg, servidores);
-                                        else
-                                            musicbot.buscar_info(msg, cancion, true);
+                                        if (servidores.canciones.length === 1 || (client.voice && !client.voice.connections.find(val => val.channel.guild.id == msg.guild.id))) musicbot.iniciar(msg, servidores);
+                                        else musicbot.buscar_info(msg, cancion, true);
                                     }
                                 }).catch((collected: any) => {
                                     if (collected.toString()
@@ -502,40 +485,37 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
         };
 
         musicbot.radio = (msg: Discord.Message, stream: any = false) => {
-            if (msg.member.voiceChannel === undefined) return msg.channel.send(notaMsg('fail', `No estas en un canal de voz.`));
+            if (msg.member && !msg.member.voice.channel) return msg.channel.send(notaMsg('fail', `No estas en un canal de voz.`));
 
-            if (!musicbot.servidores.has(msg.guild.id))
-                musicbot.servidores.set(msg.guild.id, {
-                    canciones: [],
-                    ultima: null,
-                    repetir: "Ninguna",
-                    id: msg.guild.id,
-                    autorID: msg.author.id,
-                    volumen: musicbot.volumenDef,
-                    isRadio: true
-                });
+            if (!musicbot.servidores.has(msg.guild ? msg.guild.id : "0") && msg.guild) musicbot.servidores.set(msg.guild.id, {
+                canciones: [],
+                ultima: null,
+                repetir: "Ninguna",
+                id: msg.guild.id,
+                autorID: msg.author.id,
+                volumen: musicbot.volumenDef,
+                isRadio: true
+            });
 
-            if (musicbot.soloDj && musicbot.isDj(msg.member)) return msg.channel.send(notaMsg('fail', 'No tienes permitido reproducír música ya que no cuentas con el rol correspondiente.'));
+            if (musicbot.soloDj && msg.member && musicbot.isDj(msg.member)) return msg.channel.send(notaMsg('fail', 'No tienes permitido reproducír música ya que no cuentas con el rol correspondiente.'));
 
             new Promise((resolve, reject) => {
-                let voiceConnection: Discord.VoiceConnection = client.voiceConnections.find(val => val.channel.guild.id == msg.guild.id);
+                let voiceConnection: Discord.VoiceConnection | undefined = client.voice ? client.voice.connections.find((val) => msg.guild ? val.channel.guild.id == msg.guild.id : false) : undefined;
                 if (voiceConnection === null) {
-                    if (msg.member.voiceChannel && msg.member.voiceChannel.joinable) {
-                        msg.member.voiceChannel.join().then((connection: Discord.VoiceConnection) => {
+                    if (msg.member && msg.member.voice.channel && msg.member.voice.channel.joinable) {
+                        msg.member.voice.channel.join().then((connection: Discord.VoiceConnection) => {
                             resolve(connection);
                         }).catch((error: Error) => {
                             throw new Error(`error interno inesperado: ${error.stack}`);
                         });
                     }
-                    else if (!msg.member.voiceChannel.joinable || msg.member.voiceChannel.full) {
+                    else if (msg.member && (msg.member.voice && (msg.member.voice.channel && (!msg.member.voice.channel.joinable || msg.member.voice.channel.full)))) {
                         msg.channel.send(notaMsg('fail', '¡No tengo permiso para unirme a tu canal de voz!'));
                         reject();
                     }
-                    else
-                        reject();
+                    else reject();
                 }
-                else
-                    resolve(voiceConnection);
+                else resolve(voiceConnection);
             }).then(async (connection: any) => {
                 if (stream && stream.length > 1) {
                     let estadoServer = await laut.getServerStatus();
@@ -546,16 +526,16 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
                     });
                     let rdio = stream.results[0].items[0].station;
 
-                    connection.playStream(rdio.stream_url, {
+                    connection.play(rdio.stream_url, {
                         bitrate: musicbot.bitRate,
-                        volume: (musicbot.servidores.get(msg.guild.id).volumen / 100)
+                        volume: msg.guild ? (musicbot.servidores.get(msg.guild.id).volumen / 100) : musicbot.volumenDef
                     });
                     let horaR = new Date(rdio.updated_at);
 
-                    const embed: Discord.RichEmbed = new Discord.RichEmbed()
+                    const embed: Discord.MessageEmbed = new Discord.MessageEmbed()
                         .setColor(rdio.color.length > 1 ? rdio.color : rdio.curren_playlist.color.length > 1 ? rdio.curren_playlist.color : "RANDOM")
                         .setThumbnail(rdio.images.station)
-                        .setDescription(`:radio: Radio ${client.user.username} Activado~
+                        .setDescription(`:radio: Radio ${client.user ? client.user.username : "StarMusic"} Activado~
               \n🎶◉Estación: [.::\`${rdio.display_name}\`::.]
               \nDescripción: \`${rdio.description}\`
               \nDj's: ${rdio.djs.length > 1 ? rdio.djs : "Sin Dj's"} | Lugar: ${rdio.location.length > 1 ? rdio.location : "Desconocido"}
@@ -567,13 +547,13 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
                     msg.channel.send({ embed: embed });
                 }
                 else {
-                    connection.playStream(musicbot.estacionRadio, {
+                    connection.play(musicbot.estacionRadio, {
                         bitrate: musicbot.bitRate,
-                        volume: (musicbot.servidores.get(msg.guild.id).volumen / 100)
+                        volume: msg.guild ? (musicbot.servidores.get(msg.guild.id).volumen / 100) : musicbot.volumenDef
                     });
-                    const embed: Discord.RichEmbed = new Discord.RichEmbed()
+                    const embed: Discord.MessageEmbed = new Discord.MessageEmbed()
                         .setColor("RANDOM")
-                        .setDescription(`:radio: Radio ${client.user.username} Activado~
+                        .setDescription(`:radio: Radio ${client.user ? client.user.username : "StarMusic"} Activado~
               \n🎶◉Escuchando: [.::\`${musicbot.estacionRadio}\`::.]
               \n📶◉En Línea: [24/7]`);
                     msg.channel.send({ embed: embed });
@@ -582,96 +562,89 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
         };
 
         musicbot.pausa = (msg: Discord.Message) => {
-            const voiceConnection: Discord.VoiceConnection = client.voiceConnections.find(val => val.channel.guild.id == msg.guild.id);
-            if (voiceConnection === null) return msg.channel.send(notaMsg('fail', 'No se está reproduciendo música.'));
-            if (musicbot.servidores.get(msg.guild.id).isRadio) return msg.channel.send(notaMsg('fail', 'No se puede usar en modo radio.'));
-            let authorC = musicbot.servidores.get(msg.guild.id).ultima;
-            if (authorC.autorID !== msg.author.id || (!musicbot.isAdmin(msg.member) && !musicbot.cualquieraPausa)) return msg.channel.send(notaMsg('fail', 'No tienes permiso de pausar.'));
+            const voiceConnection: Discord.VoiceConnection | undefined = client.voice ? client.voice.connections.find((val) => msg.guild ? val.channel.guild.id == msg.guild.id : false) : undefined;
+            if (!voiceConnection) return msg.channel.send(notaMsg('fail', 'No se está reproduciendo música.'));
+            if (msg.guild && musicbot.servidores.get(msg.guild.id).isRadio) return msg.channel.send(notaMsg('fail', 'No se puede usar en modo radio.'));
+            let authorC = musicbot.servidores.get(msg.guild ? msg.guild.id : "0").ultima;
+            if (authorC.autorID != msg.author.id && msg.member && (!musicbot.isAdmin(msg.member) && !musicbot.cualquieraPausa)) return msg.channel.send(notaMsg('fail', 'No tienes permiso de pausar.'));
 
-            const dispatcher: Discord.StreamDispatcher = voiceConnection.player.dispatcher;
-            if (dispatcher.paused)
-                return msg.channel.send(notaMsg(`fail`, `¡La música ya está en pausa!`));
-            else
-                dispatcher.pause();
+            const dispatcher: Discord.StreamDispatcher = voiceConnection.dispatcher;
+            if (dispatcher.paused) return msg.channel.send(notaMsg(`fail`, `¡La música ya está en pausa!`));
+            else dispatcher.pause(true);
             msg.channel.send(notaMsg('note', 'Reproducción en pausa.'));
         };
 
         musicbot.reanudar = (msg: Discord.Message) => {
-            const voiceConnection: Discord.VoiceConnection = client.voiceConnections.find(val => val.channel.guild.id == msg.guild.id);
-            if (voiceConnection === null) return msg.channel.send(notaMsg('fail', 'No se está reproduciendo música'));
+            const voiceConnection: Discord.VoiceConnection | undefined = client.voice ? client.voice.connections.find((val) => msg.guild ? val.channel.guild.id == msg.guild.id : false) : undefined;
+            if (!voiceConnection) return msg.channel.send(notaMsg('fail', 'No se está reproduciendo música'));
+            if (!msg.guild) return;
             if (musicbot.servidores.get(msg.guild.id).isRadio) return msg.channel.send(notaMsg('fail', 'No se puede usar en modo radio.'));
             let authorC = musicbot.servidores.get(msg.guild.id).ultima;
-            if (authorC.autorID !== msg.author.id || (!musicbot.isAdmin(msg.member) && !musicbot.cualquieraPausa)) return msg.channel.send(notaMsg('fail', `No tienes permiso de reanudar.`));
+            if (authorC.autorID != msg.author.id && (msg.member && !musicbot.isAdmin(msg.member) && !musicbot.cualquieraPausa)) return msg.channel.send(notaMsg('fail', `No tienes permiso de reanudar.`));
 
-            const dispatcher: Discord.StreamDispatcher = voiceConnection.player.dispatcher;
+            const dispatcher: Discord.StreamDispatcher = voiceConnection.dispatcher;
             if (!dispatcher.paused) return msg.channel.send(notaMsg('fail', `La música no está páusada.`));
             else dispatcher.resume();
             msg.channel.send(notaMsg('note', 'Reproducción Reanudada.'));
         };
 
         musicbot.omitir = (msg: Discord.Message) => {
-            const voiceConnection: Discord.VoiceConnection = client.voiceConnections.find(val => val.channel.guild.id == msg.guild.id);
+            const voiceConnection: Discord.VoiceConnection | undefined = client.voice ? client.voice.connections.find((val) => msg.guild ? val.channel.guild.id == msg.guild.id : false) : undefined;
+            if (!msg.guild || !msg.member) return;
             const servidores: ServerOpts = musicbot.servidores.get(msg.guild.id);
             let authorC = musicbot.servidores.get(msg.guild.id).ultima;
 
-            if (voiceConnection === null)
-                return msg.channel.send(notaMsg('fail', 'No se está reproduciendo música.'));
-            if (servidores.isRadio)
-                return msg.channel.send(notaMsg('fail', 'No se puede usar en modo radio.'));
-            if (!musicbot.canSkip(msg.member, servidores))
-                return msg.channel.send(notaMsg('fail', `No puedes saltear esto porque no hay una cola de reproducción.`));
-            if (authorC.autorID !== msg.author.id || (!musicbot.isAdmin(msg.member) && !musicbot.cualquieraOmite))
-                return msg.channel.send(notaMsg('fail', 'No tienes permiso de omitir.'));
-            if (musicbot.servidores.get(msg.guild.id).repetir == "canción")
-                return msg.channel.send(notaMsg("fail", "No se puede omitir mientras que el bucle está configurado como simple."));
+            if (!voiceConnection) return msg.channel.send(notaMsg('fail', 'No se está reproduciendo música.'));
+            if (servidores.isRadio) return msg.channel.send(notaMsg('fail', 'No se puede usar en modo radio.'));
+            if (!musicbot.canSkip(msg.member, servidores)) return msg.channel.send(notaMsg('fail', `No puedes saltear esto porque no hay una cola de reproducción.`));
+            if (authorC.autorID != msg.author.id && (!musicbot.isAdmin(msg.member) && !musicbot.cualquieraOmite)) return msg.channel.send(notaMsg('fail', 'No tienes permiso de omitir.'));
+            if (musicbot.servidores.get(msg.guild.id).repetir == "canción") return msg.channel.send(notaMsg("fail", "No se puede omitir mientras que el bucle está configurado como simple."));
 
-            const dispatcher: Discord.StreamDispatcher = voiceConnection.player.dispatcher;
+            const dispatcher: Discord.StreamDispatcher = voiceConnection.dispatcher;
             if (!dispatcher || dispatcher === null)
                 return msg.channel.send(notaMsg("fail", "Algo salió mal corriendo y saltando."));
-            if (dispatcher.paused) dispatcher.end();
-            dispatcher.end();
+            if (dispatcher.paused) dispatcher.destroy();
+            dispatcher.destroy();
             msg.channel.send(notaMsg("note", "Canción omitida."));
         };
 
         musicbot.salir = (msg: Discord.Message) => {
+            if (!msg.guild || !msg.member) return;
             let authorC = musicbot.servidores.get(msg.guild.id).ultima;
             let radio: boolean = musicbot.servidores.get(msg.guild.id).isRadio;
-            if (radio || musicbot.cualquieraSaca || musicbot.isAdmin(msg.member) || authorC.autorID == msg.author.id)
-            {
-                const voiceConnection: Discord.VoiceConnection = client.voiceConnections.find(val => val.channel.guild.id == msg.guild.id);
-                if (voiceConnection === null)
-                    return msg.channel.send(notaMsg('fail', 'No estoy en un canal de voz.'));
+            if (radio || musicbot.cualquieraSaca || musicbot.isAdmin(msg.member) || authorC.autorID == msg.author.id) {
+                const voiceConnection: Discord.VoiceConnection | undefined = client.voice ? client.voice.connections.find((val) => msg.guild ? val.channel.guild.id == msg.guild.id : false) : undefined;
+                if (!voiceConnection) return msg.channel.send(notaMsg('fail', 'No estoy en un canal de voz.'));
                 musicbot.emptyQueue(msg.guild);
 
-                if (!voiceConnection.player.dispatcher) return;
-                voiceConnection.player.dispatcher.end();
+                if (!voiceConnection.dispatcher) return;
+                voiceConnection.dispatcher.destroy();
                 voiceConnection.disconnect();
                 msg.channel.send(notaMsg('note', 'Dejé con éxito el canal de voz.'));
             }
-            else
-                msg.channel.send(notaMsg('fail', `Me temo que no puedo dejar que hagas eso, ${msg.author.username}.`));
+            else msg.channel.send(notaMsg('fail', `Me temo que no puedo dejar que hagas eso, ${msg.author.username}.`));
         };
 
         musicbot.np = (msg: any) => {
-            const voiceConnection: Discord.VoiceConnection = client.voiceConnections.find(val => val.channel.guild.id == msg.guild.id);
+            const voiceConnection: Discord.VoiceConnection | undefined = client.voice ? client.voice.connections.find((val) => msg.guild ? val.channel.guild.id == msg.guild.id : false) : undefined;
             const servidores: ServerOpts = musicbot.servidores.get(msg.guild.id);
-            if (voiceConnection === null) return msg.channel.send(notaMsg('fail', 'No hay Música sonando.'));
+            if (!voiceConnection) return msg.channel.send(notaMsg('fail', 'No hay Música sonando.'));
 
             if (servidores.canciones.length <= 0) return msg.channel.send(notaMsg('note', 'Cola vacía.'));
             if (musicbot.servidores.get(msg.guild.id).isRadio) return msg.channel.send(notaMsg('fail', 'No se puede usar en modo radio.'));
 
             if (msg.channel.permissionsFor(msg.guild.me).has('EMBED_LINKS')) {
                 try {
-                    const embed: Discord.RichEmbed = new Discord.RichEmbed()
-                        .setAuthor(client.user.username, client.user.displayAvatarURL)
+                    const embed: Discord.MessageEmbed = new Discord.MessageEmbed()
+                        .setAuthor(client.user ? client.user.username : "StarMusic", client.user ? client.user.displayAvatarURL() : undefined)
                         .setColor(musicbot.embedColor)
                         .setThumbnail(servidores.ultima.owner.image)
                         .setImage(`https://i3.ytimg.com/vi/${servidores.ultima.id}/2.jpg`)
                         .setColor(musicbot.embedColor)
                         .addField("🔊Escuchando:", `[${servidores.ultima.title}](${servidores.ultima.url}) por: 👤[${servidores.ultima.owner.name}](https://www.youtube.com/channel/${servidores.ultima.owner.id})`, true)
                         .addField("⏭En Cola", servidores.canciones.length, true);
-                    const resMem = client.users.get(servidores.ultima.autorID);
-                    if (musicbot.mostrarNombre && resMem) embed.setFooter(`Solicitado por: ${resMem.username}`, resMem.displayAvatarURL);
+                    const resMem = client.users.cache.get(servidores.ultima.autorID);
+                    if (musicbot.mostrarNombre && resMem) embed.setFooter(`Solicitado por: ${resMem.username}`, resMem.displayAvatarURL());
                     if (musicbot.mostrarNombre && !resMem) embed.setFooter(`Solicitado por: \`Usuario desconocido (ID: ${servidores.ultima.autorID})\``);
 
                     msg.channel.send({ embed: embed });
@@ -682,7 +655,7 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
             else {
                 try {
                     let solicitado = "";
-                    const resMem = client.users.get(servidores.ultima.autorID);
+                    const resMem = client.users.cache.get(servidores.ultima.autorID);
                     if (musicbot.mostrarNombre && resMem) solicitado = `Solicitado por: ${resMem.username}`;
                     if (musicbot.mostrarNombre && !resMem) solicitado = `Solicitado por: \`Usuario desconocido (ID: ${servidores.ultima.autorID})\``;
 
@@ -698,6 +671,7 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
         };
 
         musicbot.repetir = (msg: Discord.Message, args: any) => {
+            if (!msg.guild) return;
             if (!musicbot.servidores.has(msg.guild.id))
                 return msg.channel.send(notaMsg('fail', `No se ha encontrado ninguna cola para este servidor!`));
             if (musicbot.servidores.get(msg.guild.id).isRadio) return msg.channel.send(notaMsg('fail', 'No se puede usar en modo radio.'));
@@ -716,41 +690,39 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
             {
                 musicbot.servidores.get(msg.guild.id).repetir = "Ninguna";
                 msg.channel.send(notaMsg('note', '¡Repetir canciones deshabilitado! :arrow_forward:'));
-                const voiceConnection: Discord.VoiceConnection = client.voiceConnections.find(val => val.channel.guild.id == msg.guild.id);
-                const dispatcher: Discord.StreamDispatcher = voiceConnection.player.dispatcher;
+                const voiceConnection: Discord.VoiceConnection | undefined = client.voice ? client.voice.connections.find((val) => msg.guild ? val.channel.guild.id == msg.guild.id : false) : undefined;
+                if (!voiceConnection || !msg.guild) return;
+                const dispatcher: Discord.StreamDispatcher = voiceConnection.dispatcher;
                 let wasPaused: boolean = dispatcher.paused;
                 if (wasPaused) dispatcher.pause();
                 let newq = musicbot.servidores.get(msg.guild.id).canciones.slice(musicbot.servidores.get(msg.guild.id).ultima.position - 1);
-                if (newq !== musicbot.servidores.get(msg.guild.id).canciones)
-                    musicbot.updatePositions(newq, msg.guild)
-                        .then((res: any) => musicbot.servidores.get(msg.guild.id).canciones = res);
+                if (newq !== musicbot.servidores.get(msg.guild.id).canciones) musicbot.updatePositions(newq, msg.guild).then((res: any) => musicbot.servidores.get(msg.guild ? msg.guild.id : "0").canciones = res);
                 if (wasPaused) dispatcher.resume();
             }
         };
 
         musicbot.cola = (msg: Discord.Message, args: any) => {
-            if (!musicbot.servidores.has(msg.guild.id))
-                return msg.channel.send(notaMsg("fail", "No se pudo encontrar una cola para este servidor."));
-            else if (musicbot.servidores.get(msg.guild.id).canciones.length <= 0)
-                return msg.channel.send(notaMsg("fail", "La cola esta vacía."));
+            if (!msg.guild) return;
+            if (!musicbot.servidores.has(msg.guild.id)) return msg.channel.send(notaMsg("fail", "No se pudo encontrar una cola para este servidor."));
+            else if (musicbot.servidores.get(msg.guild.id).canciones.length <= 0) return msg.channel.send(notaMsg("fail", "La cola esta vacía."));
             if (musicbot.servidores.get(msg.guild.id).isRadio) return msg.channel.send(notaMsg('fail', 'No se puede usar en modo radio.'));
             const servidores = musicbot.servidores.get(msg.guild.id);
 
-            const embed: Discord.RichEmbed = new Discord.RichEmbed()
+            const embed: Discord.MessageEmbed = new Discord.MessageEmbed()
                 .setColor(musicbot.embedColor);
 
             if (args) {
                 let video = servidores.canciones.find((s: any) => s.position == parseInt(args) - 1);
                 if (!video) return msg.channel.send(notaMsg("fail", "No pude encontrar ese video."));
-                embed.setAuthor('Canción en cola', client.user.avatarURL)
+                embed.setAuthor('Canción en cola', client.user ? client.user.displayAvatarURL() : undefined)
                     .setTitle(video.owner.name)
                     .setURL(`https://www.youtube.com/channel/${video.owner.id}`)
                     .setDescription(`[${video.title}](${video.url})\nDuración: ${typeof video.duracion == "number" ? tiempoCon(video.duracion) : video.duracion}`)
                     .addField("En Cola", servidores.canciones.length, true)
                     .addField("Posición", video.position + 1, true)
                     .setThumbnail(`https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`);
-                const resMem = client.users.get(video.autorID);
-                if (musicbot.mostrarNombre && resMem) embed.setFooter(`Solicitado por: ${resMem.username}`, resMem.displayAvatarURL);
+                const resMem = client.users.cache.get(video.autorID);
+                if (musicbot.mostrarNombre && resMem) embed.setFooter(`Solicitado por: ${resMem.username}`, resMem.displayAvatarURL());
                 if (musicbot.mostrarNombre && !resMem) embed.setFooter(`Solicitado por: \`Usuario desconocido (ID: ${video.autorID})\``);
                 msg.channel.send({ embed });
             }
@@ -766,7 +738,7 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
                         if (i !== undefined) pages.push(i);
                     });
 
-                    embed.setAuthor('Canciones en cola', client.user.avatarURL)
+                    embed.setAuthor('Canciones en cola', client.user ? client.user.displayAvatarURL() : undefined)
                         .setFooter(`Página ${page} de ${pages.length}`)
                         .setDescription(pages[page - 1]);
                     msg.channel.send({ embed: embed }).then(async (m: any) => {
@@ -781,14 +753,14 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
                             if (page === pages.length) return;
                             page++;
                             embed.setDescription(pages[page - 1]);
-                            embed.setFooter(`Página ${page} de ${pages.length}`, msg.author.displayAvatarURL);
+                            embed.setFooter(`Página ${page} de ${pages.length}`, msg.author.displayAvatarURL());
                             m.edit({ embed: embed });
                         });
                         regresarFilter.on('collect', (r: any) => {
                             if (page === 1) return;
                             page--;
                             embed.setDescription(pages[page - 1]);
-                            embed.setFooter(`Página ${page} de ${pages.length}`, msg.author.displayAvatarURL);
+                            embed.setFooter(`Página ${page} de ${pages.length}`, msg.author.displayAvatarURL());
                             m.edit({ embed: embed });
                         });
                     });
@@ -797,15 +769,16 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
                         `**${video.position + 1}:** __${video.title}__`)
                     ).join('\n\n');
 
-                    embed.setAuthor('Canciones en cola', client.user.avatarURL)
+                    embed.setAuthor('Canciones en cola', client.user ? client.user.displayAvatarURL() : undefined)
                         .setDescription(nuevasC)
-                        .setFooter(`Página 1 de 1`, msg.author.displayAvatarURL);
+                        .setFooter(`Página 1 de 1`, msg.author.displayAvatarURL());
                     return msg.channel.send({ embed: embed });
                 }
             }
         };
 
         musicbot.remover = (msg: Discord.Message, args: any) => {
+            if (!msg.guild) return;
             if (!musicbot.servidores.has(msg.guild.id)) return msg.channel.send(notaMsg('fail', `No se ha encontrado ninguna cola para este servidor.`));
             if (musicbot.servidores.get(msg.guild.id).isRadio) return msg.channel.send(notaMsg('fail', 'No se puede usar en modo radio.'));
             if (!args) return msg.channel.send(notaMsg("fail", "No colocaste la posición del video."));
@@ -814,23 +787,22 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
             let cancionR = musicbot.servidores.get(msg.guild.id).canciones.find((x: any) => x.position == parseInt(args) - 1);
 
             if (cancionR) {
-                if (cancionR.autorID !== msg.author.id || !musicbot.isAdmin(msg.member)) return msg.channel.send(notaMsg("fail", "No puedes eliminar esta canción."));
+                if (cancionR.autorID != msg.author.id && (msg.member && !musicbot.isAdmin(msg.member))) return msg.channel.send(notaMsg("fail", "No puedes eliminar esta canción."));
                 let newq = musicbot.servidores.get(msg.guild.id).canciones.filter((s: any) => s !== cancionR);
                 musicbot.updatePositions(newq, msg.guild).then((res: any) => {
-                    musicbot.servidores.get(msg.guild.id).canciones = res;
+                    musicbot.servidores.get(msg.guild ? msg.guild.id : "0").canciones = res;
                     msg.channel.send(notaMsg("note", `Eliminado:  \`${cancionR.title}\``));
                 });
             }
-            else
-                msg.channel.send(notaMsg("fail", "No se pudo encontrar ese video o algo salió mal."));
+            else msg.channel.send(notaMsg("fail", "No se pudo encontrar ese video o algo salió mal."));
         };
 
         musicbot.volumen = (msg: Discord.Message, args: any) => {
-            const voiceConnection: Discord.VoiceConnection = client.voiceConnections.find(val => val.channel.guild.id == msg.guild.id);
-            if (voiceConnection === null) return msg.channel.send(notaMsg('fail', 'No se reproduce música.'));
+            const voiceConnection: Discord.VoiceConnection | undefined = client.voice ? client.voice.connections.find((val) => msg.guild ? val.channel.guild.id == msg.guild.id : false) : undefined;
+            if (!voiceConnection || !msg.guild || !msg.member) return msg.channel.send(notaMsg('fail', 'No se reproduce música.'));
             if (musicbot.servidores.get(msg.guild.id).isRadio) return msg.channel.send(notaMsg('fail', 'No se puede usar en modo radio.'));
             if (!musicbot.canAdjust(msg.member, musicbot.servidores.get(msg.guild.id))) return msg.channel.send(notaMsg('fail', `Sólo los administradores o DJ's pueden cambiar el volumen.`));
-            const dispatcher: Discord.StreamDispatcher = voiceConnection.player.dispatcher;
+            const dispatcher: Discord.StreamDispatcher = voiceConnection.dispatcher;
 
             if (!args || isNaN(args)) return msg.channel.send(notaMsg('fail', 'Sin volumen especificado.'));
             args = parseInt(args);
@@ -842,22 +814,21 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
         };
 
         musicbot.limpiar = (msg: Discord.Message) => {
+            if (!msg.guild || !msg.member) return;
             if (!musicbot.servidores.has(msg.guild.id)) return msg.channel.send(notaMsg("fail", "No se ha encontrado ninguna cola para este servidor.."));
-            if (!musicbot.isDj(msg.member) || !musicbot.isAdmin(msg.member)) return msg.channel.send(notaMsg("fail", `Sólo los administradores o personas con el ${musicbot.djRol} puede borrar colas.`));
+            if ((musicbot.djRol && !musicbot.isDj(msg.member)) && !musicbot.isAdmin(msg.member)) return msg.channel.send(notaMsg("fail", `Sólo los administradores o personas con el ${musicbot.djRol} puede borrar colas.`));
             let emptyQueue: Promise<boolean> = musicbot.emptyQueue(msg.guild);
             if (emptyQueue)  {
                 msg.channel.send(notaMsg("note", "Cola borrada."));
-                const voiceConnection: Discord.VoiceConnection = client.voiceConnections.find(val => val.channel.guild.id == msg.guild.id);
-                if (voiceConnection !== null)
-                {
-                    const dispatcher: Discord.StreamDispatcher = voiceConnection.player.dispatcher;
-                    if (!dispatcher || dispatcher === null) {
+                const voiceConnection: Discord.VoiceConnection | undefined = client.voice ? client.voice.connections.find((val) => msg.guild ? val.channel.guild.id == msg.guild.id : false) : undefined;
+                if (voiceConnection) {
+                    const dispatcher: Discord.StreamDispatcher = voiceConnection.dispatcher;
+                    if (!dispatcher) {
                         new Error(`dispatcher nulo en saltar cmd [${msg.guild.name}] [${msg.author.username}]`);
                         return msg.channel.send(notaMsg("fail", "Algo salió mal."));
                     }
-                    if (dispatcher.paused)
-                        dispatcher.end();
-                    dispatcher.end();
+                    if (dispatcher.paused) dispatcher.destroy();
+                    dispatcher.destroy();
                 }
             }
             else
@@ -869,39 +840,33 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
 
         // ===============[ Función Principal ]=============== //
         musicbot.iniciar = (msg: Discord.Message, servidores: any) => {
-            if (servidores.canciones.length <= 0)
-            {
+            if (servidores.canciones.length <= 0) {
                 msg.channel.send(notaMsg('note', 'Reproducción Terminada~'));
-                let voiceConnection: Discord.VoiceConnection = client.voiceConnections.find(val => val.channel.guild.id == msg.guild.id);
-                if (voiceConnection !== null) return voiceConnection.disconnect();
-                musicbot.servidores.delete(msg.guild.id);
+                const voiceConnection: Discord.VoiceConnection | undefined = client.voice ? client.voice.connections.find((val) => msg.guild ? val.channel.guild.id == msg.guild.id : false) : undefined;
+                if (voiceConnection) return voiceConnection.disconnect();
+                if (msg.guild) musicbot.servidores.delete(msg.guild.id);
             }
 
             new Promise((resolve: any, reject: any) => {
-                let voiceConnection: Discord.VoiceConnection = client.voiceConnections.find(val => val.channel.guild.id == msg.guild.id);
-                if (voiceConnection === null)
-                {
-                    if (msg.member.voiceChannel && msg.member.voiceChannel.joinable)
+                const voiceConnection: Discord.VoiceConnection | undefined = client.voice ? client.voice.connections.find((val) => msg.guild ? val.channel.guild.id == msg.guild.id : false) : undefined;
+                if (!voiceConnection && msg.member && msg.guild) {
+                    if (msg.member.voice.channel && msg.member.voice.channel.joinable)
                     {
-                        msg.member.voiceChannel.join().then((connection: Discord.VoiceConnection) => {
+                        msg.member.voice.channel.join().then((connection: Discord.VoiceConnection) => {
                             connection.setMaxListeners(0);
                             resolve(connection);
                         }).catch((error: Error) => {
                             throw new Error(`[StarMusic] [Conexión] error: ${error}`);
                         });
                     }
-                    else if (!msg.member.voiceChannel.joinable || msg.member.voiceChannel.full)
+                    else if (!msg.member.voice || !msg.member.voice.channel || !msg.member.voice.channel.joinable || msg.member.voice.channel.full)
                     {
                         msg.channel.send(notaMsg('fail', '¡No tengo permiso para unirme a tu canal de voz!'));
                         reject();
                     }
-                    else
-                        musicbot.emptyQueue(msg.guild).then(() => {
-                            reject();
-                        });
+                    else musicbot.emptyQueue(msg.guild).then(() => reject());
                 }
-                else
-                    resolve(voiceConnection);
+                else resolve(voiceConnection);
             })
             .then(async (connection: any) => {
                 
@@ -924,51 +889,50 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
                         video = servidores.canciones.find((s: any) => s.position == servidores.ultima.position);
                 }
 
-                if (!video)
-                {
+                if (!video && msg.guild) {
                     video = musicbot.servidores.get(msg.guild.id).canciones ? musicbot.servidores.get(msg.guild.id).canciones[0] : false;
-                    if (!video)
-                    {
+                    if (!video) {
                         msg.channel.send(notaMsg('note', 'Reproducción Terminada'));
                         musicbot.emptyQueue(msg.guild);
-                        const voiceConnection = client.voiceConnections.find(val => val.channel.guild.id == msg.guild.id);
-                        if (voiceConnection !== null) return voiceConnection.disconnect();
+                        const voiceConnection: Discord.VoiceConnection | undefined = client.voice ? client.voice.connections.find((val) => msg.guild ? val.channel.guild.id == msg.guild.id : false) : undefined;
+                        if (voiceConnection) return voiceConnection.disconnect();
                     }
                 }
 
-                if (musicbot.mensajeNuevaCancion == true && servidores.ultima && musicbot.servidores.get(msg.guild.id).repetir !== "canción")
+                if (musicbot.mensajeNuevaCancion == true && servidores.ultima && msg.guild && musicbot.servidores.get(msg.guild.id).repetir !== "canción")
                     musicbot.buscar_info(msg, video);
                 try {
-                    musicbot.setLast(msg.guild, video);
-                    let dispatcher: Discord.StreamDispatcher = connection.playStream(ytdl(`https://www.youtube.com/watch?v=${video.id}`, {
+                    if (msg.guild) musicbot.setLast(msg.guild, video);
+                    let dispatcher: Discord.StreamDispatcher = connection.play(ytdl(`https://www.youtube.com/watch?v=${video.id}`, {
                         filter: 'audioonly'
                     }), {
                             bitrate: musicbot.bitRate,
-                            volume: (musicbot.servidores.get(msg.guild.id).volumen / 100)
+                            volume: msg.guild ? (musicbot.servidores.get(msg.guild.id).volumen / 100) : musicbot.volumenDef
                         });
 
                     connection.on('error', (error: Error) => {
                         new Error(`error interno inesperado: ${error.stack}`);
                         if (msg && msg.channel) msg.channel.send(notaMsg('fail', `Algo salió mal con la conexión. Volviendo a intentar cola ...`));
-                        musicbot.iniciar(msg, musicbot.servidores.get(msg.guild.id));
+                        if (msg.guild) musicbot.iniciar(msg, musicbot.servidores.get(msg.guild.id));
                     });
 
                     dispatcher.on('error', (error: Error) => {
                         new Error(`error interno inesperado: ${error.stack}`);
                         if (msg && msg.channel) msg.channel.send(notaMsg('fail', `Algo salió mal al tocar música. Volviendo a intentar cola ...`));
-                        musicbot.iniciar(msg, musicbot.servidores.get(msg.guild.id));
+                        if (msg.guild) musicbot.iniciar(msg, musicbot.servidores.get(msg.guild.id));
                     });
 
-                    dispatcher.on('end', () => {
+                    dispatcher.on('finish', () => {
                         setTimeout(() => {
+                            if (!msg.guild) return;
                             if (!musicbot.servidores.get(msg.guild.id)) return;
                             let seRepite = musicbot.servidores.get(msg.guild.id).repetir;
                             if (musicbot.servidores.get(msg.guild.id).canciones.length > 0) {
                                 if (seRepite == "Ninguna" || seRepite == null) {
                                     musicbot.servidores.get(msg.guild.id).canciones.shift();
                                     musicbot.updatePositions(musicbot.servidores.get(msg.guild.id).canciones, msg.guild).then((res: any) => {
-                                        musicbot.servidores.get(msg.guild.id).canciones = res;
-                                        musicbot.iniciar(msg, musicbot.servidores.get(msg.guild.id));
+                                        musicbot.servidores.get(msg.guild ? msg.guild.id : "0").canciones = res;
+                                        musicbot.iniciar(msg, musicbot.servidores.get(msg.guild ? msg.guild.id : "0"));
                                     }).catch((err: Error) => {
                                         throw new Error(`error interno inesperado: ${err.stack}`);
                                     });
@@ -980,8 +944,8 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
                             else if (musicbot.servidores.get(msg.guild.id).canciones.length <= 0) {
                                 msg.channel.send(notaMsg('note', 'Reproducción Terminada.'));
                                 musicbot.servidores.delete(msg.guild.id);
-                                const voiceConnection = client.voiceConnections.find(val => val.channel.guild.id == msg.guild.id);
-                                if (voiceConnection !== null) return voiceConnection.disconnect();
+                                const voiceConnection: Discord.VoiceConnection | undefined = client.voice ? client.voice.connections.find((val) => msg.guild ? val.channel.guild.id == msg.guild.id : false) : undefined;
+                                if (voiceConnection) return voiceConnection.disconnect();
                             }
                         }, 1250);
                     });
@@ -1006,8 +970,8 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
             if (type === 'wrap') {
                 let ntext = text
                     .replace(/`/g, '`' + String.fromCharCode(8203))
-                    .replace(/@/g, '@' + String.fromCharCode(8203))
-                    .replace(client.token, 'ELIMINADO');
+                    .replace(/@/g, '@' + String.fromCharCode(8203));
+                if (client.token) ntext = ntext.replace(client.token, 'ELIMINADO');
                 return '```\n' + ntext + '\n```';
             }
             else if (type === 'note')
@@ -1058,18 +1022,18 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
 
         musicbot.agregado_a_cola = (msg: any, res: any) => {
             const servidores: ServerOpts = musicbot.servidores.get(msg.guild.id);
-            const resMem = client.users.get(res.autorID);
+            const resMem = client.users.cache.get(res.autorID);
 
             if (msg.channel.permissionsFor(msg.guild.me).has('EMBED_LINKS')) {
                 try {
-                    const embed: Discord.RichEmbed = new Discord.RichEmbed()
-                        .setAuthor('⏭️Agregando a la cola', client.user.avatarURL)
+                    const embed: Discord.MessageEmbed = new Discord.MessageEmbed()
+                        .setAuthor('⏭️Agregando a la cola', client.user ? client.user.displayAvatarURL() : undefined)
                         .setColor(musicbot.embedColor)
                         .setThumbnail(`https://i3.ytimg.com/vi/${res.id}/2.jpg`)
                         .addField("Agregado a Cola:", `[${res.title}](${res.url}) por: [${res.owner.name}](https://www.youtube.com/channel/${res.owner.id})`)
                         .addField("En cola", servidores.canciones.length, true)
                         .addField("Estadísticas", `📅Publicado el: ${res.fecha}\n⏲️Duración: ${res.duracion}`);
-                    if (musicbot.mostrarNombre && resMem) embed.setFooter(`Solicitado por: ${resMem.username}`, resMem.displayAvatarURL);
+                    if (musicbot.mostrarNombre && resMem) embed.setFooter(`Solicitado por: ${resMem.username}`, resMem.displayAvatarURL());
                     if (musicbot.mostrarNombre && !resMem) embed.setFooter(`Solicitado por: \`Usuario desconocido (ID: ${res.autorID})\``);
 
                     msg.channel.send({ embed: embed });
@@ -1099,19 +1063,19 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
 
         musicbot.mensaje = async (msg: any, res: any) => {
             const servidores: ServerOpts = musicbot.servidores.get(msg.guild.id);
-            const resMem = client.users.get(res.autorID);
+            const resMem = client.users.cache.get(res.autorID);
 
             if (msg.channel.permissionsFor(msg.guild.me).has('EMBED_LINKS')) {
                 try {
-                    const embed: Discord.RichEmbed = new Discord.RichEmbed()
-                        .setAuthor(client.user.username, client.user.displayAvatarURL)
+                    const embed: Discord.MessageEmbed = new Discord.MessageEmbed()
+                        .setAuthor(client.user ? client.user.username : "StarMusic", client.user ? client.user.displayAvatarURL() : undefined)
                         .setColor(musicbot.embedColor)
                         .setThumbnail(res.owner.image)
                         .setImage(`https://i3.ytimg.com/vi/${res.id}/2.jpg`)
                         .addField("🔊Escuchando:", `[${res.title}](${res.url}) por: 👤[${res.owner.name}](https://www.youtube.com/channel/${res.owner.id})`)
                         .addField("⏭En cola", servidores.canciones.length, true)
                         .addField("Estadísticas", `📅Publicado el: ${res.fecha}\nGénero: ${res.genero}\n👥Vistas: ${res.vistas}\n👍Me Gusta: ${res.likes}\n👎No Me Gusta: ${res.dislikes}`);
-                    if (musicbot.mostrarNombre && resMem) embed.setFooter(`Solicitado por: ${resMem.username}`, resMem.displayAvatarURL);
+                    if (musicbot.mostrarNombre && resMem) embed.setFooter(`Solicitado por: ${resMem.username}`, resMem.displayAvatarURL());
                     if (musicbot.mostrarNombre && !resMem) embed.setFooter(`Solicitado por: \`Usuario desconocido (ID: ${res.autorID})\``);
 
                     msg.channel.send({ embed: embed });
@@ -1139,20 +1103,21 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
         };
 
         musicbot.reproductor = async (msg: any, res: any) => {
-            const voiceConnection = client.voiceConnections.find(val => val.channel.guild.id == msg.guild.id);
-            let dispatcher: Discord.StreamDispatcher = voiceConnection.player.dispatcher;
+            const voiceConnection: Discord.VoiceConnection | undefined = client.voice ? client.voice.connections.find((val) => msg.guild ? val.channel.guild.id == msg.guild.id : false) : undefined;
+            if (!voiceConnection) return;
+            let dispatcher: Discord.StreamDispatcher = voiceConnection.dispatcher;
             if (msg.channel.permissionsFor(msg.guild.me).has('EMBED_LINKS')) {
-                let embed = new Discord.RichEmbed()
+                let embed = new Discord.MessageEmbed()
                     .setColor(musicbot.embedColor)
                     .addField(`Reproducción Actual: 0:0 :⏲: 0:0`, musicbot.emoji + "────────────────────────────── [0%]");
                 msg.channel.send({ embed: embed }).then((m: any) => {
                     let tiempoM: any = setInterval(() => {
-                        let embedTimer: Discord.RichEmbed = new Discord.RichEmbed()
+                        let embedTimer: Discord.MessageEmbed = new Discord.MessageEmbed()
                             .setColor(musicbot.embedColor);
-                        let duracionD = dispatcher ? dispatcher.time : false;
+                        let duracionD = dispatcher ? dispatcher.streamTime : false;
 
                         if (!duracionD) return clearInterval(tiempoM);
-                        else dispatcher.on('end', () => clearInterval(tiempoM));
+                        else dispatcher.on('finish', () => clearInterval(tiempoM));
 
 
                         if (res.duracion) {
@@ -1179,10 +1144,10 @@ export const start = (client: Discord.Client, options: MusicOpts) => {
                 msg.channel.send(`Reproducción Actual: 0:0 :⏲: 0:0
           \n\n${musicbot.emoji}────────────────────────────── [0%]`).then((m: any) => {
               let tiempoM: any = setInterval(() => {
-                        let duracionD = dispatcher ? dispatcher.time : false;
+                        let duracionD = dispatcher ? dispatcher.streamTime : false;
 
                         if (!duracionD) return clearInterval(tiempoM);
-                        else dispatcher.on('end', () => clearInterval(tiempoM));
+                        else dispatcher.on('finish', () => clearInterval(tiempoM));
 
                         let texto: string;
 

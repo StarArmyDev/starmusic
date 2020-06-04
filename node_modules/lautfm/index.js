@@ -71,9 +71,9 @@ class Lautfm {
   constructor(options={})
   {
     this._options = Object.assign({}, REQUEST_OPTIONS);
-    if (options.protocol) {
-      this._options.protocol = options.protocol;
-    }
+    // if (options.protocol) {
+    //   this._options.protocol = options.protocol;
+    // }
   }
 
     /**

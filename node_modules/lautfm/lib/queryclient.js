@@ -1,13 +1,11 @@
 'use strict';
 
-const http = require('http');
-const https = require('https');
+const { request } = require('https')
 const querystrig = require('querystring');
 
 module.exports = function (options, params={})
 {
-  let query = querystrig.stringify(params),
-    {request} = options.protocol === 'https:' ? https : http;
+  let query = querystrig.stringify(params)
 
   if (query) {
     options.path += '?' + query;
