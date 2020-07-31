@@ -211,6 +211,7 @@ exports.start = (client, options) => {
                 }).then((res) => {
                     if (!res)
                         return msg.channel.send(notaMsg("fail", "Algo salió mal. ¡Inténtalo de nuevo!"));
+                        console.log(res);
                     let cancion = {
                         id: res.id,
                         autorID: msg.author.id,
