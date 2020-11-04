@@ -13,7 +13,7 @@
   ],
   "dependencies": {
     "glob": "~5.0.10",
-    "commander": "~2.8.1"
+    "commander": "~2.20.3"
   },
   "license": "MIT"
 }
