@@ -1,0 +1,95 @@
+{
+    "env": {
+        "commonjs": true,
+        "es6": true,
+        "node": true
+    },
+    "extends": [
+        "eslint:recommended",
+        "prettier",
+        "prettier/@typescript-eslint",
+        "plugin:prettier/recommended",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:@typescript-eslint/eslint-recommended"
+    ],
+    "globals": {
+        "Atomics": "readonly",
+        "SharedArrayBuffer": "readonly"
+    },
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaVersion": 2021,
+        "sourceType": "module",
+        "ecmaFeatures": {
+            "modules": true
+        }
+    },
+    "plugins": ["@typescript-eslint"],
+    "rules": {
+        "prettier/prettier": "warn",
+        "linebreak-style": ["error", "unix"],
+        "indent": ["error", "tab"],
+        "curly": ["error", "multi"],
+        "quotes": ["error", "double"],
+        "semi": ["error", "always"],
+        "prefer-const": [
+            "error",
+            {
+                "destructuring": "all"
+            }
+        ],
+        "eol-last": ["error", "always"],
+        "no-trailing-spaces": "error",
+        "@typescript-eslint/no-explicit-any": ["off"],
+        "@typescript-eslint/no-var-requires": "off",
+        "@typescript-eslint/array-type": [
+            "error",
+            {
+                "default": "array",
+                "readonly": "array"
+            }
+        ],
+        "@typescript-eslint/ban-types": [
+            "error",
+            {
+                "types": {
+                    "Array": "Do not use Array.",
+                    "Object": "Do not use Object.",
+                    "String": "Do not use String."
+                }
+            }
+        ],
+        "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
+        "@typescript-eslint/consistent-type-assertions": [
+            "error",
+            {
+                "assertionStyle": "as",
+                "objectLiteralTypeAssertions": "allow"
+            }
+        ],
+        "@typescript-eslint/explicit-function-return-type": [
+            "error",
+            {
+                "allowExpressions": true
+            }
+        ],
+        "@typescript-eslint/no-non-null-assertion": ["off"],
+        "sort-imports": [
+            "error",
+            {
+                "memberSyntaxSortOrder": ["none", "single", "all", "multiple"],
+                "ignoreDeclarationSort": true
+            }
+        ]
+    },
+    "overrides": [
+        {
+            "files": ["test/**/*.ts"],
+            "globals": {
+                "describe": true,
+                "it": true,
+                "beforeEach": true
+            }
+        }
+    ]
+}
