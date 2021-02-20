@@ -1,0 +1,24 @@
+# Packages
+node_modules/
+yarn.lock
+package-lock.json
+
+# Log files
+logs/
+*.log
+
+# Miscellaneous
+.tmp/
+.vscode/
+docs/
+
+# NPM ignore
+.editorconfig
+.eslintignore
+.eslintrc.json
+.gitattributes
+.gitignore
+.prettierrc
+.github/
+test/
+tsconfig.json

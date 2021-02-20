@@ -27,21 +27,38 @@
     "plugins": ["@typescript-eslint"],
     "rules": {
         "prettier/prettier": "warn",
-        "linebreak-style": ["error", "unix"],
-        "indent": ["error", "tab"],
-        "curly": ["error", "multi"],
-        "quotes": ["error", "double"],
-        "semi": ["error", "always"],
-        "prefer-const": [
+        "no-cond-assign": [2, "except-parens"],
+        "no-unused-vars": 0,
+        "@typescript-eslint/no-unused-vars": 1,
+        "no-empty": [
             "error",
+            {
+                "allowEmptyCatch": true
+            }
+        ],
+        "prefer-const": [
+            "warn",
             {
                 "destructuring": "all"
             }
         ],
+        "spaced-comment": "warn",
+        "linebreak-style": ["error", "unix"],
+        "indent": ["error", 4],
+        "curly": ["error", "multi"],
+        "quotes": ["error", "single"],
+        "semi": ["error", "always"],
         "eol-last": ["error", "always"],
         "no-trailing-spaces": "error",
-        "@typescript-eslint/no-explicit-any": ["off"],
+        "sort-imports": [
+            "error",
+            {
+                "memberSyntaxSortOrder": ["none", "single", "all", "multiple"],
+                "ignoreDeclarationSort": true
+            }
+        ],
         "@typescript-eslint/no-var-requires": "off",
+        "@typescript-eslint/no-non-null-assertion": ["off"],
         "@typescript-eslint/array-type": [
             "error",
             {
@@ -71,14 +88,6 @@
             "error",
             {
                 "allowExpressions": true
-            }
-        ],
-        "@typescript-eslint/no-non-null-assertion": ["off"],
-        "sort-imports": [
-            "error",
-            {
-                "memberSyntaxSortOrder": ["none", "single", "all", "multiple"],
-                "ignoreDeclarationSort": true
             }
         ]
     },
