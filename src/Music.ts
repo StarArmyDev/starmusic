@@ -1,15 +1,10 @@
 import { Guild, GuildMember, Message, VoiceConnection } from 'discord.js';
 import { ICancion, MusicOpts, ServerOpts, embedJSON } from './interfaces';
 import ytdl from 'ytdl-core-discord';
-import Lautfm from 'lautfm';
 import popyt from 'popyt';
-import { ConvertTime, resolveColor } from './libs';
+import { ConvertString, ConvertTime, resolveColor } from './libs';
 
 export default abstract class Music {
-    /**
-     * Propiedad de la dependencia para el radio.
-     */
-    protected _laut: Lautfm;
     /**
      *
      */
@@ -130,11 +125,12 @@ export default abstract class Music {
         this._show_name = options.showName || true;
         // Interno
         this._youtube = new popyt(this._youtubeKey);
-        this._laut = new Lautfm();
         this._guilds = new Map();
     }
 
-    // ! Funciones Públicas
+    // ? ================== ? //
+    // ! Funciones Públicas ! //
+    // ? ================== ? //
 
     /**
      * Reproduce una canción su nombre o la URL.
@@ -148,32 +144,32 @@ export default abstract class Music {
      * @param message Un mensaje de Discord.
      * @param search Nombre de canciones a buscar.
      */
-    // public abstract search(message: Message, search: string): unknown;
+    public abstract search(message: Message, search: string): void;
 
     /**
      * Inicia la radio.
      * @param message Un mensaje de Discord.
      * @param stream URL de la estación de radio a escuchar.
      */
-    // public abstract radio(message: Message, stream?: string): unknown;
+    public abstract radio(message: Message, stream?: string): void;
 
     /**
      * Coloca pausa a la reproducción actual del bot.
      * @param message Un mensaje de Discord.
      */
-    // public abstract pause(message: Message): unknown;
+    public abstract pause(message: Message): void;
 
     /**
      * Reanuda la reproducción previamente pausada.
      * @param message Un mensaje de Discord.
      */
-    // public abstract resume(message: Message): unknown;
+    public abstract resume(message: Message): void;
 
     /**
      * Salta la canción en reproducción por la que sigue en la lista.
      * @param message Un mensaje de Discord.
      */
-    // public abstract skip(message: Message): unknown;
+    public abstract skip(message: Message): void;
 
     /**
      * Saca al bot del canal de voz actual.
@@ -185,41 +181,45 @@ export default abstract class Music {
      * Ve lo que se está reproduciendo actualmente
      * @param message Un mensaje de Discord.
      */
-    // public abstract np(message: Message): unknown;
+    public abstract np(message: Message): void;
 
     /**
      * Establece el modo de repetición de la lista de canciones o canción actual.
      * @param message Un mensaje de Discord.
-     * @param args Argumentos a pasar.
+     * @param song Modo. Si no pasa esta propiedad el modo se establecerá al siguiente de la lista.
+     * Modos:
+     * * 1: Modo repetir una canción.
+     * * 2: Repetir todas las canciones.
+     * * 0 | 3: Desactivar modo repetir.
      */
-    // public abstract repeat(message: Message, args: string): unknown;
+    public abstract repeat(message: Message, song?: 0 | 1 | 2 | 3): Promise<void>;
 
     /**
      * Ve la cola de reproducción actual.
      * @param message Un mensaje de Discord.
-     * @param args Argumentos a pasar.
+     * @param song Número de la canción en cola.
      */
-    // public abstract queue(message: Message, args: string): unknown;
+    public abstract queue(message: Message, song?: number): void;
 
     /**
      * Quita una canción de la cola de producción.
      * @param message Un mensaje de Discord.
      * @param song Número de la posisión de la canción a quitar
      */
-    // public abstract remove(message: Message, song: number): unknown;
+    public abstract remove(message: Message, song: number): void;
 
     /**
      * Establece el volumen del bot.
      * @param message Un mensaje de Discord.
      * @param volume El nivel del volumen a establecer.
      */
-    // public abstract volume(message: Message, volume: number): unknown;
+    public abstract volume(message: Message, volume: number): void;
 
     /**
      * Limpia la cola actual de reproducción.
      * @param message Un mensaje de Discord.
      */
-    // public abstract clear(message: Message): unknown;
+    public abstract clear(message: Message): void;
 
     /**
      * Inicia el módulo.
@@ -228,22 +228,27 @@ export default abstract class Music {
         console.info('Nada que iniciar.');
     }
 
-    // ! Funciones internas
+    // ? ================== ? //
+    // ! Funciones internas ! //
+    // ? ================== ? //
 
     /**
      * Actualizar la posición de las canciones.
      * @param obj
      * @param server Un servidor de Discord.
      */
-    protected async updatePositions(obj: ServerOpts, server: Guild): Promise<ServerOpts> {
+    protected async updatePositions(server: Guild, obj: ServerOpts, songs?: ICancion[]): Promise<ServerOpts> {
         return new Promise((resolve) => {
             let mm = 0;
             const newsongs: ICancion[] = [];
-            obj.songs.forEach((s) => {
+            (songs ? songs : obj.songs).forEach((s) => {
                 if (s.position !== mm) s.position = mm;
                 newsongs.push(s);
                 mm++;
             });
+
+            obj.songs = newsongs;
+
             if (obj.last) obj.last.position = 0;
             else {
                 obj.songs[0].position = 0;
@@ -272,12 +277,11 @@ export default abstract class Music {
         else return false;
     }
 
-    protected canSkip(member: GuildMember, _guilds: ServerOpts): boolean {
-        if (_guilds.last?.autorID === member.id) return true;
-        else if (this.isAdmin(member)) return true;
-        else return false;
-    }
-
+    /**
+     * Verifica si un miembro puede ajustar propiedades de la canción actual.
+     * @param member Un miembro de Discord.
+     * @param _guilds Cola de canciones y ajustes de la reproducción.
+     */
     protected canAdjust(member: GuildMember, _guilds: ServerOpts): boolean {
         if (_guilds.last?.autorID === member.id) return true;
         else if (this.isAdmin(member)) return true;
@@ -307,16 +311,25 @@ export default abstract class Music {
 
     /**
      *
+     * @param n Cantidad de datos a retornar.
      */
-    protected playSong(message: Message, servidores: ServerOpts): unknown {
-        if (servidores.songs.length <= 0) {
-            message.channel.send(this.notaMsg('note', 'Reproducción Terminada~'));
-            const voiceConnection = message.client.voice?.connections.find((val) => (message.guild! ? val.channel.guild.id == message.guild!.id : false));
-            if (voiceConnection) return voiceConnection.disconnect();
-            if (message.guild) this.emptyQueue(message.guild);
-        }
+    protected musicArraySort(array: ICancion[], n: number): ICancion[][] {
+        return Array.from(Array(Math.ceil(array.length / n)), (_, i) => array.slice(i * n, i * n + n));
+    }
 
-        new Promise((resolve: (value: VoiceConnection) => void, reject) => {
+    protected isStreamValid(url: string): boolean {
+        const pattern = /^((http|https):\/\/|www)[\w\d.-]+([a-z]{2,4})+(\/[\w\d.?%-=]+)?:\d+(\/\w*)?/gi;
+
+        if (!url || url == '') return false;
+        return pattern.test(url);
+    }
+
+    /**
+     * Conecta al bot en un canal de voz.
+     * @param message Un mensaje de Discord
+     */
+    protected connectBot(message: Message): Promise<VoiceConnection> {
+        return new Promise((resolve: (value: VoiceConnection) => void, reject) => {
             const voiceConnection = message.client.voice?.connections.find((val) => (message.guild! ? val.channel.guild.id == message.guild!.id : false));
             if (!voiceConnection && message.member && message.guild)
                 if (message.member.voice.channel?.joinable)
@@ -335,7 +348,21 @@ export default abstract class Music {
                     reject();
                 } else this.emptyQueue(message.guild).then(() => reject());
             else if (voiceConnection) resolve(voiceConnection);
-        })
+        });
+    }
+
+    /**
+     * Función principal que reproduce la canción.
+     */
+    protected playSong(message: Message, servidores: ServerOpts): unknown {
+        if (servidores.songs.length <= 0) {
+            message.channel.send(this.notaMsg('note', 'Reproducción Terminada~'));
+            const voiceConnection = message.client.voice?.connections.find((val) => (message.guild! ? val.channel.guild.id == message.guild!.id : false));
+            if (voiceConnection) return voiceConnection.disconnect();
+            if (message.guild) this.emptyQueue(message.guild);
+        }
+
+        this.connectBot(message)
             .then(async (connection: VoiceConnection) => {
                 let video: ICancion | undefined;
                 if (!servidores.last) {
@@ -392,7 +419,7 @@ export default abstract class Music {
                                 if (!servidores.loop) {
                                     this._guilds.get(message.guild!.id)!.songs.shift();
                                     servidores = this._guilds.get(message.guild!.id)!;
-                                    this.playSong(message, await this.updatePositions(servidores, message.guild));
+                                    this.playSong(message, await this.updatePositions(message.guild, servidores));
                                 } else if (servidores.loop) this.playSong(message, servidores);
                             } else {
                                 message.channel.send(this.notaMsg('note', 'Reproducción Terminada.'));
@@ -433,7 +460,7 @@ export default abstract class Music {
                 fields: [
                     {
                         name: '🔊Escuchando',
-                        value: `**${video.title}** [Link](${video.url}) [Canal](https://www.youtube.com/channel/${video.channelId})`
+                        value: `**${video.title}**\n[YouTube](${video.url}) por: 👤[Canal](https://www.youtube.com/channel/${video.channelId})`
                     },
                     {
                         name: '⏭En cola',
@@ -441,9 +468,9 @@ export default abstract class Music {
                     },
                     {
                         name: 'Estadísticas',
-                        value: `📅Publicado el: ${video.datePublished}\n⏲️Duración: ${video.duration ? ConvertTime(video.duration) : 'S/D'}\n📑Categoría: ${
-                            video.category || 'S/D'
-                        }\n�Vistas: ${video.views || 'S/D'}\n�👍Me Gusta: ${video.likes || 'S/D'}\n👎No Me Gusta: ${video.dislikes || 'S/D'}`
+                        value: `📅Publicado el: ${video.datePublished || 'S/D'}\n⏲️Duración: ${video.duration ? ConvertTime(video.duration) : 'S/D'}\n�Vistas: ${
+                            video.views ? ConvertString(video.views) : 'S/D'
+                        }\n�👍Me Gusta: ${video.likes ? ConvertString(video.likes) : 'S/D'}\n👎No Me Gusta: ${video.dislikes ? ConvertString(video.dislikes) : 'S/D'}`
                     }
                 ],
                 footer: {
@@ -455,14 +482,15 @@ export default abstract class Music {
             message.channel.send({ embed });
         } else {
             let solicitado = '';
-            if (this._show_name && resMem) solicitado = `Solicitado por: ${resMem.username}`;
-            if (this._show_name && !resMem) solicitado = `Solicitado por: \`Usuario desconocido (ID: ${video.autorID})\``;
+            if (this._show_name && resMem) solicitado = `\nSolicitado por: ${resMem.username}`;
+            if (this._show_name && !resMem) solicitado = `\nSolicitado por: \`Usuario desconocido (ID: ${video.autorID})\``;
 
             message.channel.send(`
-            🔊Escuchando ahora: **${video.title}**\n${solicitado}\n⏭En cola: ${servidores?.songs.length}
-            Categoría: ${video.category || 'S/D'}\n👥Vistas: ${video.views || 'S/D'}\n👍Me Gusta: ${video.likes || 'S/D'}\n👎No Me Gusta: ${video.dislikes || 'S/D'}`);
+            🔊Escuchando ahora: **${video.title}**${solicitado}\n⏭En cola: ${servidores?.songs.length}
+            👥Vistas: ${video.views ? ConvertString(video.views) : 'S/D'}
+            👍Me Gusta: ${video.likes ? ConvertString(video.likes) : 'S/D'}\n👎No Me Gusta: ${video.dislikes ? ConvertString(video.dislikes) : 'S/D'}`);
         }
-        this.progressBar(message, video);
+        setTimeout(() => this.progressBar(message, video), 500);
     }
 
     /**
@@ -481,7 +509,7 @@ export default abstract class Music {
                 color: this._embed_color,
                 fields: [
                     {
-                        name: 'Reproducción Actual: 0:0 :⏲: 0:0',
+                        name: `Reproducción Actual: 00:00 :⏲: ${res.duration ? ConvertTime(res.duration) : '00:00'}`,
                         value: this._emoji + '────────────────────────────── [0%]'
                     }
                 ]
@@ -489,35 +517,37 @@ export default abstract class Music {
 
             message.channel.send({ embed }).then((m) => {
                 const tiempoM = setInterval(() => {
-                    const duracionD = dispatcher ? dispatcher.streamTime : false;
+                    const duracionD = dispatcher ? dispatcher.streamTime : undefined;
 
-                    if (!duracionD) return clearInterval(tiempoM);
-                    else dispatcher.on('finish', () => clearInterval(tiempoM));
+                    if (duracionD) {
+                        dispatcher.on('finish', () => clearInterval(tiempoM));
+                        dispatcher.on('error', () => clearInterval(tiempoM));
 
-                    if (res.duration) {
-                        let porcentaje = (duracionD * 100) / (res.duration * 1000);
-                        porcentaje = Math.trunc(porcentaje);
-                        const l = '─';
-                        let por = (porcentaje * 30) / 100;
-                        por = Math.trunc(por);
+                        if (res.duration) {
+                            let porcentaje = (duracionD * 100) / (res.duration * 1000);
+                            porcentaje = Math.trunc(porcentaje);
+                            const l = '─';
+                            let por = (porcentaje * 30) / 100;
+                            por = Math.trunc(por);
 
-                        const progreso = `${l.repeat(por)}${this._emoji}${l.repeat(30 - por)} [${porcentaje}%]`;
-                        embed.fields = [
-                            {
-                                name: `Reproducción Actual: ${ConvertTime(duracionD / 1000)} :⏲: ${ConvertTime(res.duration)}`,
-                                value: progreso
-                            }
-                        ];
-                    } else
-                        embed.fields = [
-                            {
-                                name: 'Reproducción Actual:',
-                                value: ConvertTime(duracionD / 1000) + ' ⏲'
-                            }
-                        ];
+                            const progreso = `${l.repeat(por)}${this._emoji}${l.repeat(30 - por)} [${porcentaje}%]`;
+                            embed.fields = [
+                                {
+                                    name: `Reproducción Actual: ${ConvertTime(duracionD / 1000)} :⏲: ${ConvertTime(res.duration)}`,
+                                    value: progreso
+                                }
+                            ];
+                        } else
+                            embed.fields = [
+                                {
+                                    name: 'Reproducción Actual:',
+                                    value: ConvertTime(duracionD / 1000) + ' ⏲'
+                                }
+                            ];
 
-                    m.edit({ embed });
-                }, 2000);
+                        m.edit({ embed });
+                    }
+                }, 3000);
             });
         } else
             message.channel
@@ -527,25 +557,30 @@ export default abstract class Music {
                 )
                 .then((m) => {
                     const tiempoM = setInterval(() => {
-                        const duracionD = dispatcher ? dispatcher.streamTime : false;
+                        const voiceConnection = message.client.voice?.connections.find((val) => val.channel.guild.id == message.guild!.id);
+                        if (voiceConnection) {
+                            const dispatcher = voiceConnection.dispatcher;
+                            const duracionD = dispatcher ? dispatcher.streamTime : false;
 
-                        if (!duracionD) return clearInterval(tiempoM);
-                        else dispatcher.on('finish', () => clearInterval(tiempoM));
+                            if (duracionD) {
+                                dispatcher.on('finish', () => clearInterval(tiempoM));
+                                dispatcher.on('error', () => clearInterval(tiempoM));
+                                let texto: string;
 
-                        let texto: string;
+                                if (res.duration) {
+                                    let porcentaje = (duracionD * 100) / (res.duration * 1000);
+                                    porcentaje = Math.trunc(porcentaje);
+                                    const l = '─'; // 68
+                                    let por = (porcentaje * 30) / 100;
+                                    por = Math.trunc(por);
 
-                        if (res.duration) {
-                            let porcentaje = (duracionD * 100) / (res.duration * 1000);
-                            porcentaje = Math.trunc(porcentaje);
-                            const l = '─'; // 68
-                            let por = (porcentaje * 30) / 100;
-                            por = Math.trunc(por);
+                                    const progreso = `${l.repeat(por)}${this._emoji}${l.repeat(30 - por)} [${porcentaje}%]`;
+                                    texto = `Reproducción Actual: ${ConvertTime(duracionD / 1000)} :⏲: ${ConvertTime(res.duration)}\n\n${progreso}`;
+                                } else texto = 'Reproducción Actual:' + ConvertTime(duracionD / 1000) + ' ⏲';
 
-                            const progreso = `${l.repeat(por)}${this._emoji}${l.repeat(30 - por)} [${porcentaje}%]`;
-                            texto = `Reproducción Actual: ${ConvertTime(duracionD / 1000)} :⏲: ${ConvertTime(res.duration)}\n\n${progreso}`;
-                        } else texto = 'Reproducción Actual:' + ConvertTime(duracionD / 1000) + ' ⏲';
-
-                        m.edit(texto);
+                                m.edit(texto);
+                            }
+                        }
                     }, 2000);
                 });
     }
@@ -607,16 +642,14 @@ export default abstract class Music {
         } else
             try {
                 let solicitado = '';
-                if (this._show_name && resMem) solicitado = `Solicitado por: ${resMem.username}`;
-                if (this._show_name && !resMem) solicitado = `Solicitado por: \`Usuario desconocido (ID: ${video.autorID})\``;
+                if (this._show_name && resMem) solicitado = `\nSolicitado por: ${resMem.username}`;
+                if (this._show_name && !resMem) solicitado = `\nSolicitado por: \`Usuario desconocido (ID: ${video.autorID})\``;
 
-                message.channel.send(`
-        ⏭️Agregado a cola: **${video.title}**
-        \n${solicitado}
-        \nEn cola: ${servidores?.songs.length}
-        📅Publicado el: ${video.datePublished ? video.datePublished : 'Desconocido'}
-        \n⏲️Duración: ${video.duration}
-      `);
+                message.channel.send(
+                    `⏭️Agregado a cola: **${video.title}**${solicitado}\nEn cola: ${servidores?.songs.length}\n📅Publicado el: ${
+                        video.datePublished || 'S/D'
+                    }\n⏲️Duración: ${video.duration}`
+                );
             } catch (e) {
                 throw new Error(`error interno inesperado: ${e.stack}`);
             }

@@ -1,6 +1,6 @@
 {
     "name": "starmusic",
-    "version": "1.0.2",
+    "version": "2.0.0-beta",
     "description": "Reproduce tu música fácilmente, en español y sin complicaciones.",
     "main": "./lib/index",
     "types": "./src/index.d.ts",
@@ -33,7 +33,6 @@
     "dependencies": {
         "discord.js": "^12.5.1",
         "ffmpeg-static": "^4.2.7",
-        "lautfm": "^1.1.2",
         "opusscript": "^0.0.7",
         "popyt": "^4.2.0",
         "ytdl-core-discord": "^1.2.5",
