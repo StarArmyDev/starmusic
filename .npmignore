@@ -11,6 +11,7 @@ logs/
 .tmp/
 .vscode/
 docs/
+template/
 
 # NPM ignore
 .editorconfig

@@ -109,7 +109,7 @@ export default abstract class Music {
 
         // Opciones y Configuraciones
         this._youtubeKey = options.youtubeKey;
-        this._embed_color = resolveColor(options.embedColor || 'GREEN');
+        this._embed_color = resolveColor(options.embedColor || 'RED');
         this._radio_station = options.radioStation || 'http://hd.digitalradio.mx:5883/;';
         this._volume_default = options.volumeDefault || 50;
         this._max_tail = options.maxTail || 50;

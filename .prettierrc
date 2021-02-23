@@ -6,5 +6,13 @@
     "bracketSpacing": true,
     "printWidth": 170,
     "arrowParens": "always",
-    "trailingComma": "none"
+    "trailingComma": "none",
+    "overrides": [
+        {
+            "files": "*.hbs",
+            "options": {
+                "singleQuote": false
+            }
+        }
+    ]
 }

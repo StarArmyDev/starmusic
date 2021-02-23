@@ -3,12 +3,10 @@
         "target": "ES2020",
         "module": "commonjs",
         "lib": ["ES2020"],
-        "declaration": false /* Genera el archivo '.d.ts' correspondiente. */,
         "outDir": "./lib",
         "rootDir": "./src",
         "strict": true,
-        /* "sourceMap": true, */
-        "noImplicitAny": true /* Cambiar a true */,
+        "noImplicitAny": true,
         "removeComments": true,
         "moduleResolution": "node",
         "forceConsistentCasingInFileNames": true,
@@ -16,5 +14,11 @@
         "esModuleInterop": true,
         "experimentalDecorators": true
     },
-    "exclude": ["node_modules", "./dist/", "**/*.spec.ts", "./test/"]
+    "exclude": ["node_modules", "./dist/", "**/*.spec.ts", "./test/"],
+    "typedocOptions": {
+        "entryPoints": ["./src/index.ts"],
+        "media": "./media",
+        "out": "docs",
+        "theme": "./template"
+    }
 }
