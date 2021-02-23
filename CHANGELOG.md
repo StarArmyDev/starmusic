@@ -69,12 +69,11 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.
 - Se cambiaron nombres de todas las funciones (Se pasaron al español).
 - Se cambiaron nombres de funciones internas.
 
-## [v1.0.0] - 2019-08-06
+## v1.0.0 - 2019-08-06
 
 - Versión inicial.
 
-[unreleased]: https://github.com/StarArmyDev/starmusic/compare/v1.0.0...HEAD
-[v1.0.0]: https://github.com/StarArmyDev/starmusic/releases/tag/v1.0.0
-[v1.0.1]: https://github.com/StarArmyDev/starmusic/compare/v1.0.1...v1.0.0
-[v1.0.2]: https://github.com/StarArmyDev/starmusic/compare/v1.0.2...v1.0.1
-[v2.0.0]: https://github.com/StarArmyDev/starmusic/compare/v2.0.0...v1.0.2
+[unreleased]: https://github.com/StarArmyDev/starmusic/compare/v2.0.0...HEAD
+[v1.0.1]: https://github.com/StarArmyDev/starmusic/compare/v1.0.0...v1.0.1
+[v1.0.2]: https://github.com/StarArmyDev/starmusic/compare/v1.0.1...v1.0.2
+[v2.0.0]: https://github.com/StarArmyDev/starmusic/compare/v1.0.2...v2.0.0
