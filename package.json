@@ -10,18 +10,22 @@
         "test": "mocha -r ts-node/register --extension ts",
         "lint": "npx eslint --ext .ts ./src",
         "lint:fix": "npx eslint --ext .ts ./src --fix",
-        "deploy:docs": "gh-pages -d doc",
-        "build": "tsc -b"
+        "deploy:docs": "gh-pages -d docs",
+        "build": "tsc -b",
+        "prepublish": "npm run lont:fix && npm run build"
     },
     "author": "DavichoStar",
     "license": "MIT",
-    "homepage": "https://github.com/DavichoStar/starmusic#readme",
+    "homepage": "https://stararmydev.github.io/starmusic/",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/DavichoStar/starmusic.git"
+        "url": "git+https://github.com/StarArmyDev/starmusic.git"
     },
     "bugs": {
-        "url": "https://github.com/DavichoStar/starmusic/issues"
+        "url": "https://github.com/StarArmyDev/starmusic/issues"
+    },
+    "publishConfig": {
+        "registry": "https://registry.npmjs.org"
     },
     "keywords": [
         "music",

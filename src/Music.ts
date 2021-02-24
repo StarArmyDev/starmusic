@@ -320,7 +320,6 @@ export default abstract class Music {
     protected isStreamValid(url: string): boolean {
         const pattern = /^((http|https):\/\/|www)[\w\d.-]+([a-z]{2,4})+(\/[\w\d.?%-=]+)?:\d+(\/\w*)?/gi;
 
-        if (!url || url == '') return false;
         return pattern.test(url);
     }
 
@@ -401,9 +400,9 @@ export default abstract class Music {
                     }
 
                     connection.on('error', (error: Error) => {
-                        new Error(`error interno inesperado: ${error.stack}`);
                         if (message && message.channel) message.channel.send(this.notaMsg('fail', 'Algo salió mal con la conexión. Volviendo a intentar...'));
                         this.playSong(message, servidores);
+                        throw `Error interno inesperado: ${error.stack}`;
                     });
 
                     dispatcher.on('error', (error: Error) => {

@@ -2,8 +2,8 @@
 
 <img src="./media/logo.png" height="180">
 
-[![NPM version](https://img.shields.io/npm/v/starmusic?maxAge=3600)](https://www.npmjs.com/package/starmusic)
-[![NPM downloads](https://img.shields.io/npm/dt/starmusic?maxAge=3600)](https://www.npmjs.com/package/starmusic) [![ESLint status](https://github.com/StarArmyDev/starmusic/workflows/ESLint/badge.svg)](https://github.com/StarArmyDev/starmusic/actions?query=workflow%3A%22ESLint%22) [![DeepScan grade](https://deepscan.io/api/teams/12942/projects/15986/branches/329941/badge/grade.svg)](https://deepscan.io/dashboard/#view=project&tid=12942&pid=15986&bid=329941) [![dev chat](https://discordapp.com/api/guilds/491819854307917826/widget.png?style=shield)](https://discord.gg/VG6D4ss)
+[![Versión de NPM](https://img.shields.io/npm/v/starmusic?maxAge=3600)](https://www.npmjs.com/package/starmusic)
+[![Descargas de NPM](https://img.shields.io/npm/dt/starmusic?maxAge=3600)](https://www.npmjs.com/package/starmusic) [![Estado ESLint](https://github.com/StarArmyDev/starmusic/workflows/ESLint/badge.svg)](https://github.com/StarArmyDev/starmusic/actions?query=workflow%3A%22ESLint%22) [![Vulnerabilidades Conocidas](https://snyk.io/test/github/StarArmyDev/starmusic/badge.svg)](https://snyk.io/test/github/StarArmyDev/starmusic?targetFile=package.json) [![DeepScan grade](https://deepscan.io/api/teams/12942/projects/16035/branches/333292/badge/grade.svg)](https://deepscan.io/dashboard/#view=project&tid=12942&pid=16035&bid=333292) [![Chat de Discord](https://discordapp.com/api/guilds/491819854307917826/widget.png?style=shield)](https://discord.gg/VG6D4ss)
 
 [![npm installnfo](https://nodei.co/npm/starmusic.png?downloads=true&stars=true "npm installnfo")](https://nodei.co/npm/starmusic/)
 
@@ -11,7 +11,7 @@
 
 </div>
 
-Módulo fácil de imprementar para tu bot de Discord con el cual podrás crear bots de música en español enfocada para discord.js.
+Módulo fácil de implementar para tu bot de Discord con el cual podrás crear bots de música en español enfocada para discord.js.
 
 Para ver los cambios recientes, no olvides leer el documento [CHANGELOG.md](./CHANGELOG.md)
 

@@ -59,7 +59,7 @@ export default class StarMusic extends Music {
                                 const cancion: ICancion = {
                                     id: video.id,
                                     autorID: message.author.id,
-                                    position: servidores?.songs.length || 0,
+                                    position: servidores!.songs.length || 0,
                                     title: video.title,
                                     url: video.url,
                                     channelId: video.author.channelID,
@@ -68,7 +68,7 @@ export default class StarMusic extends Music {
 
                                 servidores!.songs.push(cancion);
 
-                                if (servidores?.songs.length === 1) this.playSong(message, servidores);
+                                if (servidores!.songs.length === 1) this.playSong(message, servidores!);
                                 index++;
                             });
 
@@ -89,7 +89,7 @@ export default class StarMusic extends Music {
                             const cancion: ICancion = {
                                 id: result.id,
                                 autorID: message.author.id,
-                                position: servidores?.songs.length || 0,
+                                position: servidores!.songs.length || 0,
                                 title: result.title,
                                 url: result.url,
                                 channelId: result.channelId,
@@ -183,15 +183,15 @@ export default class StarMusic extends Music {
                                                         const cancion: ICancion = {
                                                             id: videos[song_number].id,
                                                             autorID: message.author.id,
-                                                            position: servidores?.songs.length || 0,
+                                                            position: servidores!.songs.length || 0,
                                                             title: videos[song_number].title,
                                                             url: videos[song_number].url,
                                                             channelId: videos[song_number].channelId
                                                         };
-                                                        servidores?.songs.push(cancion);
+                                                        servidores!.songs.push(cancion);
 
                                                         if (
-                                                            servidores?.songs.length == 0 ||
+                                                            servidores!.songs.length == 0 ||
                                                             !message.client.voice?.connections.find((val) => val.channel.guild.id == message.guild!.id)
                                                         )
                                                             this.playSong(message, servidores!);
@@ -250,12 +250,12 @@ export default class StarMusic extends Music {
                                                             const cancion: ICancion = {
                                                                 id: videos[song_number].id,
                                                                 autorID: message.author.id,
-                                                                position: servidores?.songs.length || 0,
+                                                                position: servidores!.songs.length || 0,
                                                                 title: videos[song_number].title,
                                                                 url: videos[song_number].url,
                                                                 channelId: videos[song_number].channelId
                                                             };
-                                                            servidores?.songs.push(cancion);
+                                                            servidores!.songs.push(cancion);
                                                             if (
                                                                 servidores!.songs.length == 0 ||
                                                                 !message.client.voice?.connections.find((val) => val.channel.guild.id == message.guild!.id)
@@ -279,7 +279,7 @@ export default class StarMusic extends Music {
                                     videos.push({
                                         id: result.id,
                                         autorID: message.author.id,
-                                        position: servidores?.songs.length || 0,
+                                        position: servidores!.songs.length || 0,
                                         title: result.title,
                                         url: result.url,
                                         channelId: result.channelId,
@@ -507,8 +507,7 @@ export default class StarMusic extends Music {
         if (!message.guild || !message.member) return undefined;
 
         const servidores = this._guilds.get(message.guild.id);
-        if (song && isNaN(song)) message.channel.send(this.notaMsg('fail', 'Debes de pasar un dato del tipo número.'));
-        else if (!servidores) message.channel.send(this.notaMsg('fail', 'No se pudo encontrar una cola para este servidor.'));
+        if (!servidores) message.channel.send(this.notaMsg('fail', 'No se pudo encontrar una cola para este servidor.'));
         else if (servidores.songs.length <= 0) message.channel.send(this.notaMsg('fail', 'La cola esta vacía.'));
         else if (servidores.isRadio) message.channel.send(this.notaMsg('fail', 'No se puede usar en modo radio.'));
         else {
@@ -581,7 +580,6 @@ export default class StarMusic extends Music {
         if (!message.guild || !message.member) return undefined;
 
         const servidores = this._guilds.get(message.guild.id);
-        if (song && isNaN(song)) message.channel.send(this.notaMsg('fail', 'Debes de pasar un dato del tipo número.'));
         if (!servidores) message.channel.send(this.notaMsg('fail', 'No se ha encontrado ninguna cola para este servidor.'));
         else if (servidores.isRadio) message.channel.send(this.notaMsg('fail', 'No se puede usar en modo radio.'));
         else if (!song) message.channel.send(this.notaMsg('fail', 'No colocaste la posición del video.'));
@@ -607,7 +605,6 @@ export default class StarMusic extends Music {
         if (!message.guild || !message.member) return undefined;
 
         const voiceConnection = message.client.voice?.connections.find((val) => (message.guild! ? val.channel.guild.id == message.guild!.id : false));
-        if (volume && isNaN(volume)) message.channel.send(this.notaMsg('fail', 'Debes de pasar un dato del tipo número.'));
         if (!voiceConnection) message.channel.send(this.notaMsg('fail', 'No se reproduce música.'));
         else if (this._guilds.get(message.guild.id)?.isRadio) message.channel.send(this.notaMsg('fail', 'No se puede usar en modo radio.'));
         else if (!this.canAdjust(message.member, this._guilds.get(message.guild!.id)!))
@@ -615,7 +612,7 @@ export default class StarMusic extends Music {
         else {
             const dispatcher = voiceConnection.dispatcher;
 
-            if (!volume || isNaN(volume)) message.channel.send(this.notaMsg('fail', 'Sin volumen especificado.'));
+            if (!volume) message.channel.send(this.notaMsg('fail', 'Sin volumen especificado.'));
             else if (volume > 200 || volume <= 0) message.channel.send(this.notaMsg('fail', 'Volumen fuera de rango, debe estar dentro de 1 a 200'));
             else {
                 dispatcher.setVolume(volume / 100);
