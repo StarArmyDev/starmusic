@@ -475,7 +475,7 @@ export default class StarMusic extends Music {
     async repeat(message: Message, song?: 0 | 1 | 2 | 3): Promise<void> {
         if (!message.guild || !message.member) return undefined;
 
-        if (song && song < 0 && song > 3) message.channel.send(this.notaMsg('fail', 'Solamente puedes colocar 0, 1, 2 o 3'));
+        if (song && (song < 0 || song > 3)) message.channel.send(this.notaMsg('fail', 'Solamente puedes colocar 0, 1, 2 o 3'));
 
         let servidores = this._guilds.get(message.guild.id);
         if (!servidores) message.channel.send(this.notaMsg('fail', 'No se ha encontrado ninguna cola para este servidor'));

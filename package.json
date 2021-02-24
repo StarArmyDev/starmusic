@@ -12,7 +12,7 @@
         "lint:fix": "npx eslint --ext .ts ./src --fix",
         "deploy:docs": "gh-pages -d docs",
         "build": "tsc -b",
-        "prepublish": "npm run lont:fix && npm run build"
+        "prepublish": "npm run lint:fix && npm run build"
     },
     "author": "DavichoStar",
     "license": "MIT",
