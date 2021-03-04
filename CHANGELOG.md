@@ -7,6 +7,13 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ## [Unreleased]
 
+## [v2.0.1] - 2021-03-04
+
+### Fixed
+
+- Corrección en el tiempo cuando se agrega una canción a la cola.
+- Corrección en las imagenes y ejemplos del readme.
+
 ## [v2.0.0] - 2021-02-22
 
 ## Added
@@ -77,3 +84,4 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.
 [v1.0.1]: https://github.com/StarArmyDev/starmusic/compare/v1.0.0...v1.0.1
 [v1.0.2]: https://github.com/StarArmyDev/starmusic/compare/v1.0.1...v1.0.2
 [v2.0.0]: https://github.com/StarArmyDev/starmusic/compare/v1.0.2...v2.0.0
+[v2.0.1]: https://github.com/StarArmyDev/starmusic/compare/v2.0.0...v2.0.1

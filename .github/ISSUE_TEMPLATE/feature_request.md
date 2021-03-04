@@ -1,19 +1,26 @@
 ---
 name: Nueva funcionalidad o ideas 💡
 about: Para incorporar nuevas funciones o sugerir ideas que puedan implementarse crea un ISSUE de este estilo.
-title: '[IDEA SUGERENCIA IMPLEMENTACION] - Titulo'
+title: '[FEATURE REQUEST] - Title'
 labels: 'Type: Enhancement'
 ---
+
 <!-- Considera usar Discussions: https://github.com/faztcommunity/xfazt-bot/discussions?discussions_q=category%3AIdeas -->
 
-### Descripción de la funcionalidad
+### Description of functionality
+
 <!-- Inserta una descripcion de lo que tienes pensado lograr. -->
+
 ...
 
-### Propuesta de implementación
+### Implementation proposal
+
 <!-- Aqui dinos como esperas lograrlo (por ejemplo que archivos, librerias, funciones utilizarás, patrones de diseño, etc) -->
+
 ...
 
-### Screens / Maquetado idea
-<!-- Si ya tienes la implementación hecha o algún grafico que muestre lo que tienes, por favor colócalo por aqui. -->
+### Screens / Idea layout
+
+<!-- Si ya tienes la implementación hecha o algún gráfico que muestre lo que tienes, por favor colócalo por aqui. -->
+
 ...

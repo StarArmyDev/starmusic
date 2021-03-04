@@ -296,8 +296,8 @@ const prefix = '!';
 const client = new Discord.Client();
 client.commands = new Discord.Collection();
 
-// Aquí iniciamos el módulo.
-var music = new StarMusic({
+// Aquí iniciamos el módulo y lo pasaremos por el cliente.
+client.music = new StarMusic({
     youtubeKey: 'ApiKey',
     djRoles: ['IDRol', 'IDRol2'],
     embedColor: 'BLUE'
@@ -327,7 +327,7 @@ client.on('messages', (message) => {
 
     if (command == 'play') {
         // Obtenemos nuestro comando y ejecutamos su función execute.
-        client.commands.get('play').execute(message, args);
+        client.commands.get('play').execute(client, message, args);
     }
 });
 
@@ -340,8 +340,8 @@ En la misma carpeta del bot, cree una nueva carpeta y asígnele un nombre como `
 module.exports = {
     name: 'play',
     description: 'Reproduce una canción',
-    execute(message, args) {
-        music.play(message, args.join(' '));
+    execute(client, message, args) {
+        client.music.play(message, args.join(' '));
     }
 };
 ```

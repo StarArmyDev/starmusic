@@ -1,30 +1,40 @@
 ---
 name: Reporte de Bug 🐞
 about: Crea un reporte claro para ayudarnos a resolverlo.
-title: '[BUG ERROR WARN] - Titulo'
+title: '[BUG WARNING] - Title'
 labels: 'Type: Bug'
 assignees: ''
 ---
 
-### Descripción del problema
+### Description of the problem
+
 <!-- Inserta una descripcion clara de que está ocurriendo -->
+
 ...
 
-### Pasos para reproducir
+### Steps to reproduce
+
 <!--- Aqui va el paso a paso de como logras generar el error
 Asegurate de cubirlo todo sin ambiguedades -->
+
 ...
 
-### Resultado esperado
+### Expected result
+
 <!-- Que se supone que deberías estar recibiendo o pasando. -->
+
 ...
 
-### Resultado real
+### Actual result
+
 <!-- Aqui coloca que es lo que terminas recibiendo o el error final que se te arroja. -->
+
 ...
 
 ---
-### Logs e informacion relevante
+
+### Logs and relevant information
 
 <!-- Incluye aqui un detalle de archivos y referencias que nos puedan ayudar a resolver el problema -->
+
 ...

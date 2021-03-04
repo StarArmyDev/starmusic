@@ -406,9 +406,9 @@ export default abstract class Music {
                     });
 
                     dispatcher.on('error', (error: Error) => {
-                        new Error(`error interno inesperado: ${error.stack}`);
                         if (message && message.channel) message.channel.send(this.notaMsg('fail', 'Algo salió mal al tocar música. Volviendo a intentar...'));
                         this.playSong(message, servidores);
+                        throw `Error interno inesperado: ${error.stack}`;
                     });
 
                     dispatcher.on('finish', () => {
@@ -601,7 +601,7 @@ export default abstract class Music {
         if (!video.duration || !video.datePublished) {
             const result = await this._youtube.searchVideos(video.id, 1);
             if (result.results[0]) {
-                video.duration = result.results[0].seconds;
+                video.duration = result.results[0].minutes * 60 + result.results[0].seconds;
                 video.datePublished = result.results[0].datePublished;
             }
         }

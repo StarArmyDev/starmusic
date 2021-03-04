@@ -16,10 +16,10 @@ export default class StarMusic extends Music {
     // Inicio
 
     play(message: Message, search: string): void {
-        if (!message.guild) message.channel.send(this.notaMsg('fail', 'No estas en un servidor.'));
-        else if (!message.member!.voice.channel) message.channel.send(this.notaMsg('fail', 'No estas en un canal de voz.'));
+        if (!message.guild || !message.member) message.channel.send(this.notaMsg('fail', 'No estas en un servidor.'));
+        else if (!message.member.voice.channel) message.channel.send(this.notaMsg('fail', 'No estas en un canal de voz.'));
         else if (!search) message.channel.send(this.notaMsg('fail', '¡No has colocado nada que buscar!'));
-        else if (message.member && this._just_dj && (this.isDj(message.member) || this.isAdmin(message.member)))
+        else if (this._just_dj && (this.isDj(message.member) || this.isAdmin(message.member)))
             message.channel.send(this.notaMsg('fail', 'No tienes permitido reproducír música ya que no cuentas con el rol correspondiente.'));
         else {
             let servidores = this._guilds.get(message.guild.id);
@@ -116,9 +116,8 @@ export default class StarMusic extends Music {
     }
 
     search(message: Message, search: string): void {
-        if (!message.guild) message.channel.send(this.notaMsg('fail', 'No estas en un servidor.'));
-
-        if (!message.member!.voice.channel) message.channel.send(this.notaMsg('fail', 'No estas en un canal de voz'));
+        if (!message.guild || !message.member) message.channel.send(this.notaMsg('fail', 'No estas en un servidor.'));
+        else if (!message.member.voice.channel) message.channel.send(this.notaMsg('fail', 'No estas en un canal de voz'));
         else if (!search) message.channel.send(this.notaMsg('fail', 'No especificaste algo qué buscar'));
         else {
             let servidores = this._guilds.get(message.guild!.id);
@@ -131,7 +130,7 @@ export default class StarMusic extends Music {
                         isRadio: false
                     })
                     .get(message.guild.id);
-            if (this._just_dj && !this.isDj(message.member!) && !this.isAdmin(message.member!))
+            if (this._just_dj && !this.isDj(message.member) && !this.isAdmin(message.member))
                 message.channel.send(this.notaMsg('fail', 'No tienes permitido reproducír música ya que no cuentas con el rol correspondiente.'));
             else if (servidores!.songs.length >= this._max_tail && this._max_tail > 0) message.channel.send(this.notaMsg('fail', 'Tamaño máximo de cola alcanzado!'));
             else {
