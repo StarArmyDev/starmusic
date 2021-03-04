@@ -1,6 +1,6 @@
 {
     "name": "starmusic",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "description": "Reproduce tu música fácilmente, en español y sin complicaciones.",
     "main": "./lib/index",
     "types": "./src/index.d.ts",
