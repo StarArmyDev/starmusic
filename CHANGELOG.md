@@ -7,6 +7,22 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ## [Unreleased]
 
+## [v3.0.0] - 2021-00-00
+
+### Fixed
+
+- Con el cambio de dependencias y la re-codificación de la mayoría del código, se notará una mejora significativa en estabilidad y rendimiento.
+
+### Changed
+
+- **[BREAKING]** Cambio de versión de discord.js a v13
+- Mejoras en el aspecto visual de los mensajes enviados quitando y poniendo información necesaria en cada uno.
+
+### Removed
+
+- **[BREAKING]** Se eliminó la función `volume` para mejorar el rendimiento del bot evitando dicho proceso.
+- Reproductor removido por el momento.
+
 ## [v2.0.1] - 2021-03-04
 
 ### Fixed
@@ -80,8 +96,9 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.
 
 - Versión inicial.
 
-[unreleased]: https://github.com/StarArmyDev/starmusic/compare/v2.0.1...HEAD
+[unreleased]: https://github.com/StarArmyDev/starmusic/compare/v3.0.0...HEAD
 [v1.0.1]: https://github.com/StarArmyDev/starmusic/compare/v1.0.0...v1.0.1
 [v1.0.2]: https://github.com/StarArmyDev/starmusic/compare/v1.0.1...v1.0.2
 [v2.0.0]: https://github.com/StarArmyDev/starmusic/compare/v1.0.2...v2.0.0
 [v2.0.1]: https://github.com/StarArmyDev/starmusic/compare/v2.0.0...v2.0.1
+[v3.0.0]: https://github.com/StarArmyDev/starmusic/compare/v2.0.1...v3.0.0

@@ -1,19 +1,15 @@
-import { Guild, GuildMember, Message, VoiceConnection } from 'discord.js';
-import { ICancion, MusicOpts, ServerOpts, embedJSON } from './interfaces';
-import ytdl from 'ytdl-core-discord';
+import { AudioPlayerStatus, AudioResource, VoiceConnectionStatus, entersState, joinVoiceChannel } from '@discordjs/voice';
+import { Colors, ColorsFlags, ConvertString, ConvertTime, resolveColor } from './libs';
+import { GuildMember, Message, MessageEmbed, Snowflake } from 'discord.js';
+import { MusicSubscription } from './Suscription';
+import { ISongData, Song } from './Song';
 import popyt from 'popyt';
-import { ConvertString, ConvertTime, resolveColor } from './libs';
 
 export default abstract class Music {
     /**
-     *
+     * Instancia de popyt para hacer búsquedas en YouTube.
      */
     protected _youtube: popyt;
-
-    /**
-     * Servidores con lista de reproducción.
-     */
-    protected _guilds: Map<string, ServerOpts>;
 
     /**
      * Clave de la API de Youtube
@@ -30,11 +26,6 @@ export default abstract class Music {
      * Link de la estación por defecto para la radio.
      */
     protected _radio_station: string;
-
-    /**
-     * Volumen por defecto del bot.
-     */
-    protected _volume_default: number;
 
     /**
      * Cola máxima que manejará el bot.
@@ -91,12 +82,7 @@ export default abstract class Music {
      */
     protected _show_name: boolean;
 
-    /* protected abstract searcher: unknown;
-
-    protected abstract buscar_info: (message: Message, video: unknown, cola?: boolean) => void;
-    protected abstract agregado_a_cola: (message: unknown, video: unknown) => void;
-    protected abstract mensaje: (message: unknown, video: unknown) => Promise<void>;
-    protected abstract reproductor: (message: unknown, video: unknown) => Promise<void>; */
+    protected _subscriptions = new Map<Snowflake, MusicSubscription>();
 
     /**
      * Crea una instancia de StarMusic.
@@ -109,9 +95,8 @@ export default abstract class Music {
 
         // Opciones y Configuraciones
         this._youtubeKey = options.youtubeKey;
-        this._embed_color = resolveColor(options.embedColor || 'RED');
+        this._embed_color = resolveColor(Colors[options.embedColor] || Colors.RED);
         this._radio_station = options.radioStation || 'http://hd.digitalradio.mx:5883/;';
-        this._volume_default = options.volumeDefault || 50;
         this._max_tail = options.maxTail || 50;
         this._bitrate = options.bitrate || 'auto';
         this._emoji = options.emoji || '🔴';
@@ -125,7 +110,6 @@ export default abstract class Music {
         this._show_name = options.showName || true;
         // Interno
         this._youtube = new popyt(this._youtubeKey);
-        this._guilds = new Map();
     }
 
     // ? ================== ? //
@@ -209,54 +193,14 @@ export default abstract class Music {
     public abstract remove(message: Message, song: number): void;
 
     /**
-     * Establece el volumen del bot.
-     * @param message Un mensaje de Discord.
-     * @param volume El nivel del volumen a establecer.
-     */
-    public abstract volume(message: Message, volume: number): void;
-
-    /**
      * Limpia la cola actual de reproducción.
      * @param message Un mensaje de Discord.
      */
     public abstract clear(message: Message): void;
 
-    /**
-     * Inicia el módulo.
-     */
-    start(): void {
-        console.info('Nada que iniciar.');
-    }
-
     // ? ================== ? //
     // ! Funciones internas ! //
     // ? ================== ? //
-
-    /**
-     * Actualizar la posición de las canciones.
-     * @param obj
-     * @param server Un servidor de Discord.
-     */
-    protected async updatePositions(server: Guild, obj: ServerOpts, songs?: ICancion[]): Promise<ServerOpts> {
-        return new Promise((resolve) => {
-            let mm = 0;
-            const newsongs: ICancion[] = [];
-            (songs ? songs : obj.songs).forEach((s) => {
-                if (s.position !== mm) s.position = mm;
-                newsongs.push(s);
-                mm++;
-            });
-
-            obj.songs = newsongs;
-
-            if (obj.last) obj.last.position = 0;
-            else {
-                obj.songs[0].position = 0;
-                obj.last = obj.songs[0];
-            }
-            resolve(this._guilds.set(server.id, obj).get(server.id)!);
-        });
-    }
 
     /**
      * Validar si el usuario es administrador.
@@ -265,7 +209,7 @@ export default abstract class Music {
     protected isAdmin(member: GuildMember): boolean {
         if (member.id == member.guild.ownerID) return true;
         else if (member.roles.cache.find((r) => this._admin_roles.includes(r.id))) return true;
-        else return member.hasPermission('ADMINISTRATOR');
+        else return member.permissions.has('ADMINISTRATOR');
     }
 
     /**
@@ -278,157 +222,134 @@ export default abstract class Music {
     }
 
     /**
-     * Verifica si un miembro puede ajustar propiedades de la canción actual.
-     * @param member Un miembro de Discord.
-     * @param _guilds Cola de canciones y ajustes de la reproducción.
-     */
-    protected canAdjust(member: GuildMember, _guilds: ServerOpts): boolean {
-        if (_guilds.last?.autorID === member.id) return true;
-        else if (this.isAdmin(member)) return true;
-        else return false;
-    }
-
-    protected setLast(server: Guild, ultima: ICancion): Promise<ServerOpts> {
-        return new Promise((resolve: (value: ServerOpts) => void, reject: (value: string) => void) => {
-            const q = this._guilds.get(server.id);
-            if (q) {
-                q.last = ultima;
-                this._guilds.set(server.id, q);
-                resolve(q);
-            } else reject('Sin cola de servidor');
-        });
-    }
-
-    /**
-     * Vacía la cola del servidor
-     * @param guild Un servidor de Discord.
-     */
-    protected emptyQueue(guild: Guild): Promise<boolean> {
-        return new Promise((resolve) => {
-            resolve(this._guilds.delete(guild.id));
-        });
-    }
-
-    /**
      *
      * @param n Cantidad de datos a retornar.
      */
-    protected musicArraySort(array: ICancion[], n: number): ICancion[][] {
+    protected musicArraySort(array: Song[], n: number): Song[][] {
         return Array.from(Array(Math.ceil(array.length / n)), (_, i) => array.slice(i * n, i * n + n));
     }
 
+    /**
+     * Evalúa un string si es válido como url de transmición de audio.
+     * @param url URL a evaluar.
+     * @returns Si es válido el url.
+     */
     protected isStreamValid(url: string): boolean {
         const pattern = /^((http|https):\/\/|www)[\w\d.-]+([a-z]{2,4})+(\/[\w\d.?%-=]+)?:\d+(\/\w*)?/gi;
 
         return pattern.test(url);
     }
 
+    protected getSong(message: Message): Song {
+        const subscription = this._subscriptions.get(message.guild.id);
+
+        if (subscription?.audioPlayer && subscription.audioPlayer.state.status !== AudioPlayerStatus.Idle)
+            return (subscription.audioPlayer.state.resource as AudioResource<Song>).metadata;
+    }
+
     /**
      * Conecta al bot en un canal de voz.
      * @param message Un mensaje de Discord
      */
-    protected connectBot(message: Message): Promise<VoiceConnection> {
-        return new Promise((resolve: (value: VoiceConnection) => void, reject) => {
-            const voiceConnection = message.client.voice?.connections.find((val) => (message.guild! ? val.channel.guild.id == message.guild!.id : false));
-            if (!voiceConnection && message.member && message.guild)
-                if (message.member.voice.channel?.joinable)
-                    message.member.voice.channel
-                        .join()
-                        .then((connection) => {
-                            connection.setMaxListeners(0);
-                            resolve(connection);
-                        })
-                        .catch((error) => reject(new Error(`[StarMusic] [Conexión Canal] error: ${error}`)));
-                else if (!message.member.voice.channel?.joinable) {
-                    message.channel.send(this.notaMsg('fail', 'No tengo permiso para unirme a tu canal de voz'));
-                    reject();
-                } else if (message.member.voice.channel.full) {
-                    message.channel.send(this.notaMsg('fail', 'El canal ya está lleno'));
-                    reject();
-                } else this.emptyQueue(message.guild).then(() => reject());
-            else if (voiceConnection) resolve(voiceConnection);
+    protected connectBot(message: Message): Promise<MusicSubscription> {
+        let subscription = this._subscriptions.get(message.guild.id);
+
+        return new Promise((resolve: (value: MusicSubscription) => void, reject) => {
+            if (!subscription) {
+                const connection = joinVoiceChannel({
+                    channelId: message.member.voice.channel.id,
+                    guildId: message.guild.id,
+                    adapterCreator: message.guild.voiceAdapterCreator,
+                    selfDeaf: true
+                });
+
+                subscription = new MusicSubscription(connection, {
+                    onStart: (song: Song) => {
+                        if (this._new_song_message) this.sendMessage(message, song);
+                    },
+                    onAddQueue: (song: Song) => {
+                        this.sendMessageAddQueue(message, song);
+                    },
+                    onFinish: (sub: MusicSubscription) => {
+                        if (sub.queue.length == 0) {
+                            message.channel.send(this.notaMsg('note', 'Reproducción Terminada~'));
+                            sub.stop();
+                            sub.voiceConnection.disconnect();
+                        }
+                    },
+                    onDestroy: () => {
+                        this._subscriptions.delete(message.guild.id);
+                    },
+                    onError: (err) => {
+                        throw `Error interno inesperado: ${err}`;
+                    }
+                });
+
+                subscription.voiceConnection.on('error', console.warn);
+
+                entersState(connection, VoiceConnectionStatus.Ready, 20_000)
+                    .then(() => {
+                        this._subscriptions.set(message.guild.id, subscription);
+                        resolve(subscription);
+                    })
+                    .catch(() => {
+                        connection.destroy();
+                        message.reply(this.notaMsg('fail', 'No pude unirme al canal de voz. Vuelva a intentarlo más tarde.'));
+                        reject();
+                    });
+            } else if (!message.member.voice.channel.joinable) {
+                message.reply(this.notaMsg('fail', 'No tengo permiso para unirme a tu canal de voz'));
+                reject();
+            } else if (message.member.voice.channel.full) {
+                message.reply(this.notaMsg('fail', 'El canal ya está lleno'));
+                reject();
+            } else resolve(subscription);
         });
+    }
+
+    /**
+     * Crea una canción con su información para añadirla a la cola.
+     */
+    protected async createSong(message: Message, url: string): Promise<Song> {
+        try {
+            const info = await this._youtube.getVideo(url);
+
+            const cancion: ISongData = {
+                id: info.id,
+                autorID: message.author.id,
+                title: info.title,
+                url: info.url,
+                channelID: info.channel.id,
+                duration: info.minutes * 60 + info.seconds,
+                likes: info.likes,
+                dislikes: info.dislikes,
+                views: info.views,
+                category: info.category,
+                datePublished: info.datePublished
+            };
+
+            return new Song(cancion);
+        } catch (_) {
+            message.reply(this.notaMsg('fail', 'No se econtró ningún video.'));
+            return null;
+        }
     }
 
     /**
      * Función principal que reproduce la canción.
      */
-    protected playSong(message: Message, servidores: ServerOpts): unknown {
-        if (servidores.songs.length <= 0) {
-            message.channel.send(this.notaMsg('note', 'Reproducción Terminada~'));
-            const voiceConnection = message.client.voice?.connections.find((val) => (message.guild! ? val.channel.guild.id == message.guild!.id : false));
-            if (voiceConnection) return voiceConnection.disconnect();
-            if (message.guild) this.emptyQueue(message.guild);
-        }
-
+    protected playSong(message: Message, song: Song): void {
         this.connectBot(message)
-            .then(async (connection: VoiceConnection) => {
-                let video: ICancion | undefined;
-                if (!servidores.last) {
-                    video = servidores.songs[0];
-                    this.sendMessage(message, video);
-                } else if (servidores.loop == 'all') {
-                    video = servidores.songs.find((s) => s.position == servidores.last!.position + 1);
-                    if (!video?.id) video = servidores.songs[0];
-                } else if (servidores.loop == 'single') video = servidores.last;
-                else video = servidores.songs.find((s) => s.position == servidores.last?.position);
+            .then(async (musicConnection) => {
+                if (!this._new_song_message && musicConnection.queue.length == 0) this.sendMessage(message, song);
 
-                if (!video && message.guild) {
-                    video = this._guilds.get(message.guild!.id)?.songs[0];
-                    if (!video) {
-                        message.channel.send(this.notaMsg('note', 'Reproducción Terminada'));
-                        this.emptyQueue(message.guild!);
-                        const voiceConnection = message.client.voice?.connections.find((val) => val.channel.guild.id == message.guild?.id);
-                        if (voiceConnection) return voiceConnection.disconnect();
-                        else return await this.emptyQueue(message.guild);
-                    }
-                }
+                musicConnection.addedToQueue(song);
 
-                if (this._new_song_message && servidores.last && message.guild && servidores.loop !== 'single' && video) this.sendMessage(message, video);
-
-                if (video) {
-                    let dispatcher;
-                    try {
-                        servidores = await this.setLast(message.guild!, video);
-                        dispatcher = connection.play(await ytdl(`https://www.youtube.com/watch?v=${video.id}`), {
-                            type: 'opus',
-                            bitrate: this._bitrate,
-                            volume: servidores.volume / 100
-                        });
-                    } catch (error) {
-                        throw `${error}`;
-                    }
-
-                    connection.on('error', (error: Error) => {
-                        if (message && message.channel) message.channel.send(this.notaMsg('fail', 'Algo salió mal con la conexión. Volviendo a intentar...'));
-                        this.playSong(message, servidores);
-                        throw `Error interno inesperado: ${error.stack}`;
-                    });
-
-                    dispatcher.on('error', (error: Error) => {
-                        if (message && message.channel) message.channel.send(this.notaMsg('fail', 'Algo salió mal al tocar música. Volviendo a intentar...'));
-                        this.playSong(message, servidores);
-                        throw `Error interno inesperado: ${error.stack}`;
-                    });
-
-                    dispatcher.on('finish', () => {
-                        setTimeout(async () => {
-                            if (!message.guild) return;
-                            if (servidores.songs.length > 0) {
-                                if (!servidores.loop) {
-                                    this._guilds.get(message.guild!.id)!.songs.shift();
-                                    servidores = this._guilds.get(message.guild!.id)!;
-                                    this.playSong(message, await this.updatePositions(message.guild, servidores));
-                                } else if (servidores.loop) this.playSong(message, servidores);
-                            } else {
-                                message.channel.send(this.notaMsg('note', 'Reproducción Terminada.'));
-                                this.emptyQueue(message.guild);
-                                const voiceConnection = message.client.voice?.connections.find((val) => val.channel.guild.id == message.guild!.id);
-                                if (voiceConnection) return voiceConnection.disconnect();
-                            }
-                        }, 1250);
-                    });
-                }
+                musicConnection.voiceConnection.on('error', (error: Error) => {
+                    if (message && message.channel) message.channel.send(this.notaMsg('fail', 'Algo salió mal con la conexión. Volviendo a intentar...'));
+                    this.playSong(message, song);
+                    throw `Error interno inesperado: ${error.stack}`;
+                });
             })
             .catch((error: Error) => {
                 throw new Error(`[StarMusic] [Conexión] ${error}`);
@@ -440,56 +361,40 @@ export default abstract class Music {
      * @param message Un mensaje de Discord.
      * @param video Vídeo a mostrar.
      */
-    protected sendMessage(message: Message, video: ICancion): void {
+    protected async sendMessage(message: Message, video: Song): Promise<void> {
         if (!message.guild) return undefined;
-        const servidores = this._guilds.get(message.guild.id);
-        const resMem = message.client.users.cache.get(video.autorID);
+        const subscription = this._subscriptions.get(message.guild.id);
+        let resMem = message.client.users.cache.get(`${BigInt(video.autorID)}`);
+        if (!resMem) resMem = await message.client.users.fetch(`${BigInt(video.autorID)}`).catch(() => null);
 
         if (message.channel.type != 'dm' && message.channel.permissionsFor(message.guild.me!)!.has('EMBED_LINKS')) {
-            const embed: embedJSON = {
-                type: 'rich',
-                color: this._embed_color,
-                author: {
-                    name: message.client.user?.username || '🎶 StarMusic',
-                    url: message.client.user?.displayAvatarURL()
-                },
-                thumbnail: {
-                    url: `https://i3.ytimg.com/vi/${video.id}/2.jpg`
-                },
-                fields: [
-                    {
-                        name: '🔊Escuchando',
-                        value: `**${video.title}**\n[YouTube](${video.url}) por: 👤[Canal](https://www.youtube.com/channel/${video.channelId})`
-                    },
-                    {
-                        name: '⏭En cola',
-                        value: `${servidores?.songs.length || 0}`
-                    },
-                    {
-                        name: 'Estadísticas',
-                        value: `📅Publicado el: ${video.datePublished || 'S/D'}\n⏲️Duración: ${video.duration ? ConvertTime(video.duration) : 'S/D'}\n�Vistas: ${
-                            video.views ? ConvertString(video.views) : 'S/D'
-                        }\n�👍Me Gusta: ${video.likes ? ConvertString(video.likes) : 'S/D'}\n👎No Me Gusta: ${video.dislikes ? ConvertString(video.dislikes) : 'S/D'}`
-                    }
-                ],
-                footer: {
-                    text: this._show_name ? `Solicitado por: ${resMem ? resMem.username : `\`Usuario desconocido (ID: ${video.autorID})\``}` : '',
-                    icon_url: resMem ? resMem.displayAvatarURL() : undefined
-                }
-            };
+            const embed = new MessageEmbed()
+                .setColor(this._embed_color)
+                .setAuthor('🔊Escuchando a:')
+                .setThumbnail(`https://i3.ytimg.com/vi/${video.id}/2.jpg`)
+                .setTitle(video.title)
+                .setURL(video.url)
+                .setDescription(
+                    `⏲️Duración: \`${video.duration ? ConvertTime(video.duration) : 'S/D'}\`\nRepetir: \`${
+                        !subscription.loop ? 'Desactivado' : subscription.loop == 'single' ? '🔂 Una Canción' : '🔁 Toda la cola de reproducción'
+                    }\`\n⏭En cola: \`${subscription.queue.findIndex((sg) => sg.id == video.id) + 1}/${subscription?.queue.length}\``
+                )
+                .setFooter('Por StarMusic', 'https://i.imgur.com/WKD5uUL.png');
+            if (this._show_name)
+                embed.setFooter(`Por StarMusic | Solicitado por: ${resMem?.tag || `Usuario desconocido (${video.autorID})`}`, 'https://i.imgur.com/WKD5uUL.png');
 
-            message.channel.send({ embed });
+            message.channel.send({ embeds: [embed] });
         } else {
             let solicitado = '';
-            if (this._show_name && resMem) solicitado = `\nSolicitado por: ${resMem.username}`;
-            if (this._show_name && !resMem) solicitado = `\nSolicitado por: \`Usuario desconocido (ID: ${video.autorID})\``;
+            if (this._show_name) solicitado = `| Solicitado por: \`${resMem?.tag || `Usuario desconocido (${video.autorID})`}\``;
 
-            message.channel.send(`
-            🔊Escuchando ahora: **${video.title}**${solicitado}\n⏭En cola: ${servidores?.songs.length}
-            👥Vistas: ${video.views ? ConvertString(video.views) : 'S/D'}
-            👍Me Gusta: ${video.likes ? ConvertString(video.likes) : 'S/D'}\n👎No Me Gusta: ${video.dislikes ? ConvertString(video.dislikes) : 'S/D'}`);
+            message.channel.send(
+                `🔊Escuchando ahora: **${video.title}** [Video](${video.url})\n⏭En cola: \`${subscription.queue.findIndex((sg) => sg.id == video.id) + 1}/${
+                    subscription?.queue.length
+                }\`\n👥Vistas: \`${video.views ? ConvertString(video.views) : 'S/D'}\`\nPor StarMusic ${solicitado}`
+            );
         }
-        setTimeout(() => this.progressBar(message, video), 500);
+        // setTimeout(() => this.progressBar(message, video), 500);
     }
 
     /**
@@ -497,24 +402,17 @@ export default abstract class Music {
      * @param message Un mensaje de Discord.
      * @param res Canción en reproducción.
      */
-    protected async progressBar(message: Message, res: ICancion): Promise<void> {
+    protected async progressBar(message: Message, res: Song): Promise<void> {
         if (!message.guild) return undefined;
-        const voiceConnection = message.client.voice?.connections.find((val) => val.channel.guild.id == message.guild!.id);
+        const voiceConnection = this._subscriptions.get(message.guild.id);
         if (!voiceConnection) return;
-        const dispatcher = voiceConnection.dispatcher;
+        // const dispatcher = voiceConnection.dispatcher;
         if (message.channel.type != 'dm' && message.channel.permissionsFor(message.guild.me!)!.has('EMBED_LINKS')) {
-            const embed: embedJSON = {
-                type: 'rich',
-                color: this._embed_color,
-                fields: [
-                    {
-                        name: `Reproducción Actual: 00:00 :⏲: ${res.duration ? ConvertTime(res.duration) : '00:00'}`,
-                        value: this._emoji + '────────────────────────────── [0%]'
-                    }
-                ]
-            };
+            const embed = new MessageEmbed()
+                .setColor(this._embed_color)
+                .addField(`Reproducción Actual: 00:00 :⏲: ${res.duration ? ConvertTime(res.duration) : '00:00'}`, this._emoji + '────────────────────────────── [0%]');
 
-            message.channel.send({ embed }).then((m) => {
+            message.channel.send({ embeds: [embed] }); /* .then((m) => {
                 const tiempoM = setInterval(() => {
                     const duracionD = dispatcher ? dispatcher.streamTime : undefined;
 
@@ -544,19 +442,18 @@ export default abstract class Music {
                                 }
                             ];
 
-                        m.edit({ embed });
+                        m.edit({ embeds: [embed] });
                     }
                 }, 3000);
-            });
+            }); */
         } else
-            message.channel
-                .send(
-                    `Reproducción Actual: 0:0 :⏲: 0:0
+            message.channel.send(
+                `Reproducción Actual: 0:0 :⏲: 0:0
           \n\n${this._emoji}────────────────────────────── [0%]`
-                )
-                .then((m) => {
+            );
+        /* .then((m) => {
                     const tiempoM = setInterval(() => {
-                        const voiceConnection = message.client.voice?.connections.find((val) => val.channel.guild.id == message.guild!.id);
+                        const voiceConnection = this._subscriptions.get(message.guild.id);
                         if (voiceConnection) {
                             const dispatcher = voiceConnection.dispatcher;
                             const duracionD = dispatcher ? dispatcher.streamTime : false;
@@ -581,77 +478,38 @@ export default abstract class Music {
                             }
                         }
                     }, 2000);
-                });
+                }); */
     }
 
-    /**
-     * Agrega una canción a la lista de reproducción.
-     * @param message Un mensaje de Discord.
-     * @param video Canción a mostrar.
-     */
-    protected async addedToQueue(message: Message, video: ICancion): Promise<void> {
-        if (!message.guild) return undefined;
-        const servidores = this._guilds.get(message.guild.id);
-        let resMem = message.client.users.cache.get(video.autorID);
-        if (!resMem)
-            try {
-                resMem = await message.client.users.fetch(video.autorID);
-            } catch (_) {}
-
-        if (!video.duration || !video.datePublished) {
-            const result = await this._youtube.searchVideos(video.id, 1);
-            if (result.results[0]) {
-                video.duration = result.results[0].minutes * 60 + result.results[0].seconds;
-                video.datePublished = result.results[0].datePublished;
-            }
-        }
+    protected async sendMessageAddQueue(message: Message, video: Song): Promise<void> {
+        const subscription = this._subscriptions.get(message.guild.id);
+        let resMem = message.client.users.cache.get(`${BigInt(video.autorID)}`);
+        if (!resMem) resMem = await message.client.users.fetch(`${BigInt(video.autorID)}`).catch(() => null);
 
         if (message.channel.type != 'dm' && message.channel.permissionsFor(message.guild.me!)!.has('EMBED_LINKS')) {
-            const embed: embedJSON = {
-                type: 'rich',
-                color: this._embed_color,
-                author: {
-                    name: '⏭️Agregando a la cola',
-                    url: message.client.user?.displayAvatarURL()
-                },
-                thumbnail: {
-                    url: `https://i3.ytimg.com/vi/${video.id}/2.jpg`
-                },
-                fields: [
-                    {
-                        name: 'Agregado a Cola',
-                        value: `**${video.title}** [Link](${video.url}) [Canal](https://www.youtube.com/channel/${video.channelId})`
-                    },
-                    {
-                        name: '⏭En cola',
-                        value: `${servidores?.songs.length || 0}`
-                    },
-                    {
-                        name: 'Estadísticas',
-                        value: `📅Publicado el: ${video.datePublished || 'S/D'}\n⏲️Duración: ${video.duration ? ConvertTime(video.duration) : 'S/D'}`
-                    }
-                ],
-                footer: {
-                    text: this._show_name ? `Solicitado por: ${resMem ? resMem.username : `\`Usuario desconocido (ID: ${video.autorID})\``}` : '',
-                    icon_url: resMem ? resMem.displayAvatarURL() : undefined
-                }
-            };
+            const embed = new MessageEmbed()
+                .setColor(this._embed_color)
+                .setAuthor('⏭️Agregado a Cola:')
+                .setThumbnail(`https://i3.ytimg.com/vi/${video.id}/2.jpg`)
+                .setDescription(
+                    `**${video.title}** [Video](${video.url})\n⏲️Duración: \`${video.duration ? ConvertTime(video.duration) : 'S/D'}\`\nEn cola: \`${
+                        subscription.queue.length
+                    }\``
+                )
+                .setFooter('Por StarMusic', 'https://i.imgur.com/WKD5uUL.png');
+            if (this._show_name) embed.setFooter(`Solicitado por: ${resMem?.username || `Usuario desconocido (${video.autorID})`}`, 'https://i.imgur.com/WKD5uUL.png');
 
-            message.channel.send({ embed });
-        } else
-            try {
-                let solicitado = '';
-                if (this._show_name && resMem) solicitado = `\nSolicitado por: ${resMem.username}`;
-                if (this._show_name && !resMem) solicitado = `\nSolicitado por: \`Usuario desconocido (ID: ${video.autorID})\``;
+            message.channel.send({ embeds: [embed] });
+        } else {
+            let solicitado = '';
+            if (this._show_name) solicitado = `| Solicitado por: \`${resMem?.tag || `Usuario desconocido (${video.autorID})`}\``;
 
-                message.channel.send(
-                    `⏭️Agregado a cola: **${video.title}**${solicitado}\nEn cola: ${servidores?.songs.length}\n📅Publicado el: ${
-                        video.datePublished || 'S/D'
-                    }\n⏲️Duración: ${video.duration}`
-                );
-            } catch (e) {
-                throw new Error(`error interno inesperado: ${e.stack}`);
-            }
+            message.channel.send(
+                `⏭️Agregado a cola: **${video.title}** [Video](${video.url})\n⏲️Duración: \`${video.duration ? ConvertTime(video.duration) : 'S/D'}\`\nEn cola: \`${
+                    subscription?.queue.length
+                }\`\nPor StarMusic ${solicitado}`
+            );
+        }
     }
 
     /**
@@ -678,4 +536,65 @@ export default abstract class Music {
         else if (type == 'error') throw new Error(`[ERROR] ${text}`);
         else throw new Error(`${type} es un tipo inválido`);
     }
+}
+
+/** Interfaz para las opciones del módulo */
+export interface MusicOpts {
+    /**
+     * Clave de la API de Youtube
+     * Para obtener detalles sobre cómo obtener una clave de API y crear un proyecto, visite [este enlace](https://developers.google.com/youtube/v3/getting-started)
+     */
+    youtubeKey: string;
+    /**
+     * Color principal de los embeds.
+     */
+    embedColor?: ColorsFlags;
+    /**
+     * Link de la estación por defecto para la radio.
+     */
+    radioStation?: string;
+    /**
+     * Cola máxima que manejará el bot.
+     */
+    maxTail?: number;
+    /**
+     * Tasa de bits a manejar.
+     */
+    bitrate?: number | 'auto';
+    /**
+     * Emoji que se usará en el embed de reproducción.
+     */
+    emoji?: string;
+    /**
+     * IDs de roles que se consideran como admins en el servidor.
+     */
+    adminRoles?: string[];
+    /**
+     * IDs de roles que se consideran como DJ en el servidor.
+     */
+    djRoles?: string[];
+    /**
+     * Si solamente podrán poner música los que tengan el/los roles de DJ.
+     */
+    justDj?: boolean;
+    /**
+     * Si cualquiera puede sacarl al bot de un canal.
+     */
+    anyTakeOut?: boolean;
+    /**
+     * Si cualquiera puede pausar el bot en el servidor.
+     */
+    anyPause?: boolean;
+    /**
+     * Si cualquiera puede saltar una canción del bot en el servidor.
+     */
+    anySkip?: boolean;
+    /**
+     * Si se mandará un mensaje cada vez que comience una nueva canción.
+     */
+    newSongMessage?: boolean;
+    /**
+     * Si se mostrará el nombre del que use los comandos.
+     */
+    showName?: boolean;
 }

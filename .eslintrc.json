@@ -4,14 +4,7 @@
         "es6": true,
         "node": true
     },
-    "extends": [
-        "eslint:recommended",
-        "prettier",
-        "prettier/@typescript-eslint",
-        "plugin:prettier/recommended",
-        "plugin:@typescript-eslint/recommended",
-        "plugin:@typescript-eslint/eslint-recommended"
-    ],
+    "extends": ["eslint:recommended", "prettier", "plugin:prettier/recommended", "plugin:@typescript-eslint/recommended", "plugin:@typescript-eslint/eslint-recommended"],
     "globals": {
         "Atomics": "readonly",
         "SharedArrayBuffer": "readonly"
@@ -43,7 +36,7 @@
             }
         ],
         "spaced-comment": "warn",
-        "linebreak-style": ["error", "unix"],
+        "linebreak-style": ["error", "windows"],
         "indent": ["error", 4],
         "curly": ["error", "multi"],
         "quotes": ["error", "single"],

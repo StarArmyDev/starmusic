@@ -1,5 +1,5 @@
 import { Message } from 'discord.js';
-import { MusicOpts } from './interfaces';
+import { MusicOpts } from './Music';
 
 declare module 'starmusic' {
     export default class StarMusic {
@@ -80,13 +80,6 @@ declare module 'starmusic' {
          * @param message Un mensaje de Discord.
          */
         public leave(message: Message): void;
-
-        /**
-         * Establece el volumen del bot.
-         * @param message Un mensaje de Discord.
-         * @param volume El nivel del volumen a establecer.
-         */
-        public volume(message: Message, volume: number): void;
 
         /**
          * Limpia la cola actual de reproducción.

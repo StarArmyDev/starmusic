@@ -6,6 +6,7 @@
         "outDir": "./lib",
         "rootDir": "./src",
         "strict": true,
+        "strictNullChecks": false,
         "noImplicitAny": true,
         "removeComments": true,
         "moduleResolution": "node",

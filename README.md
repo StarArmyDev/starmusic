@@ -33,7 +33,6 @@ npm install --save starmusic
 - [repeat](#repeat)
 - [queue](#queue)
 - [remove](#remove)
-- [volume](#volume)
 - [clear](#clear)
 
 ## Configuraciones
@@ -198,19 +197,6 @@ Quita una canción en especifico de la cola de reproducción.
 1. message: Corresponde a la variable `message` de tu evento `messages` de Discord.
 2. song: Número correspondiente a la posision de la canción a quitar.
 
-# Volume
-
-```js
-volume(message, volume);
-```
-
-Establece el volumen de la música entre 0 a 200 con que la música sonará independiente del volumen del bot en discord. _(se puede establecer el volumen por defecto en {opciones})_
-
-- **Argumentos**
-
-1. message: Corresponde a la variable `message` de tu evento `messages` de Discord.
-2. volume: Número válido entre 0 a 200.
-
 # Clear
 
 ```js
@@ -231,7 +217,6 @@ Tabla de opciones y configuraciones
 | -------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
 | youtubekey     | String  | Key de YouTube Data API3 que puedes obtener desde [Google Cloud](https://developers.google.com/youtube/v3/getting-started)                         | Ninguno     |
 | embedColor     | String  | Color que se le dará a los embeds en hexadesimal o colores reservados de discord.js                                                                | RED         |
-| volumeDefault  | Number  | Volumen por defecto con el cual iniciarán todas las canciones de 1 a 200                                                                           | 50          |
 | emoji          | String  | Establece el emoji que se mostrará en el reproductor                                                                                               | 🔴          |
 | maxTail        | Number  | Establece el límite de la cola que se permite                                                                                                      | 50          |
 | bitrate        | String  | Establece el bitRate que discord.js usa y permite                                                                                                  | auto        |
@@ -282,7 +267,7 @@ client.on('messages', (message) => {
 client.login('SecretToken');
 ```
 
-### Usando Command handling (Nivel medio)
+### Usando Command handling (Nivel intermedio)
 
 En nuestro archivo principal. Comunmente llamado `index.js`.
 
@@ -346,7 +331,7 @@ module.exports = {
 };
 ```
 
-Puedes ver una guía completa de ¿Cómo hacer manejo de comandos? en [esta guía](https://discordjs.guide/command-handling/ 'Discord.js') _(En inglés)_
+Puedes ver una guía completa de como hacer manejo de comandos en [esta guía](https://discordjs.guide/command-handling/ 'Discord.js') _(En inglés)_
 
 ## Soporte
 
