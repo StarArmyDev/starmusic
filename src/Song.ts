@@ -14,7 +14,7 @@ import { raw as ytdl } from 'youtube-dl-exec';
  * La canción se mantiene en cola con la información ya precargada para cuando salga
  * de la cola, se convierta en un recurso de audio para ser reproducida.
  */
-export class Song implements ISongData {
+export class Song implements SongData {
     public readonly id: string;
     public readonly autorID: string;
     public readonly title: string;
@@ -27,7 +27,7 @@ export class Song implements ISongData {
     public readonly category?: string;
     public readonly datePublished?: Date;
 
-    constructor(SongData: ISongData) {
+    constructor(SongData: SongData) {
         this.id = SongData.id;
         this.autorID = SongData.autorID;
         this.title = SongData.title;
@@ -78,7 +78,7 @@ export class Song implements ISongData {
 }
 
 /** Interfaz para una canción */
-export interface ISongData {
+export interface SongData {
     /**
      * ID del video de Youtube.
      */

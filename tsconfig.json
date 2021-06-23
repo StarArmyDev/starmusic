@@ -17,7 +17,7 @@
     },
     "exclude": ["node_modules", "./dist/", "**/*.spec.ts", "./test/"],
     "typedocOptions": {
-        "entryPoints": ["./src/index.ts"],
+        "entryPoints": ["./src/main.ts"],
         "media": "./media",
         "out": "docs",
         "theme": "./template"

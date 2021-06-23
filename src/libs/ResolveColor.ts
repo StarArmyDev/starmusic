@@ -4,10 +4,10 @@
  * @returns Un color
  */
 export const resolveColor = (color: Colors | Colors[]): number => {
-    if (!(color instanceof Array)) {
+    if (!Array.isArray(color)) {
         if (color === Colors.RANDOM) return Math.floor(Math.random() * (0xffffff + 1));
         if (color === Colors.DEFAULT) return 0;
-    } else if (Array.isArray(color)) color = (color[0] << 16) + (color[1] << 8) + color[2];
+    } else color = (color[0] << 16) + (color[1] << 8) + color[2];
 
     if (color < 0 || color > 0xffffff) throw new RangeError('COLOR_RANGE');
     else if (color && isNaN(Number(color))) throw new TypeError('COLOR_CONVERT');

@@ -2,7 +2,7 @@ import { AudioPlayerStatus, AudioResource, VoiceConnectionStatus, entersState, j
 import { Colors, ColorsFlags, ConvertString, ConvertTime, resolveColor } from './libs';
 import { GuildMember, Message, MessageEmbed, Snowflake } from 'discord.js';
 import { MusicSubscription } from './Suscription';
-import { ISongData, Song } from './Song';
+import { Song, SongData } from './Song';
 import popyt from 'popyt';
 
 export default abstract class Music {
@@ -82,6 +82,9 @@ export default abstract class Music {
      */
     protected _show_name: boolean;
 
+    /**
+     * Colección de subscriciones de cada servidor, asignados por su ID.
+     */
     protected _subscriptions = new Map<Snowflake, MusicSubscription>();
 
     /**
@@ -198,6 +201,13 @@ export default abstract class Music {
      */
     public abstract clear(message: Message): void;
 
+    /**
+     * Obtén la colección de subscriciones de cada servidor, asignados por su ID.
+     */
+    public get subscriptions(): Map<Snowflake, MusicSubscription> {
+        return this._subscriptions;
+    }
+
     // ? ================== ? //
     // ! Funciones internas ! //
     // ? ================== ? //
@@ -206,7 +216,9 @@ export default abstract class Music {
      * Validar si el usuario es administrador.
      * @param member Un usuario de un servidor de Discord
      */
-    protected isAdmin(member: GuildMember): boolean {
+    protected async isAdmin(member: GuildMember): Promise<boolean> {
+        await member.fetch();
+
         if (member.id == member.guild.ownerID) return true;
         else if (member.roles.cache.find((r) => this._admin_roles.includes(r.id))) return true;
         else return member.permissions.has('ADMINISTRATOR');
@@ -216,7 +228,9 @@ export default abstract class Music {
      * Validar si el usuario tiene rol de Dj.
      * @param member Un usuario de un servidor de Discord.
      */
-    protected isDj(member: GuildMember): boolean {
+    protected async isDj(member: GuildMember): Promise<boolean> {
+        await member.fetch();
+
         if (member.roles.cache.find((r) => this._dj_roles.includes(r.id))) return true;
         else return false;
     }
@@ -314,7 +328,7 @@ export default abstract class Music {
         try {
             const info = await this._youtube.getVideo(url);
 
-            const cancion: ISongData = {
+            const cancion: SongData = {
                 id: info.id,
                 autorID: message.author.id,
                 title: info.title,
@@ -346,7 +360,7 @@ export default abstract class Music {
                 musicConnection.addedToQueue(song);
 
                 musicConnection.voiceConnection.on('error', (error: Error) => {
-                    if (message && message.channel) message.channel.send(this.notaMsg('fail', 'Algo salió mal con la conexión. Volviendo a intentar...'));
+                    if (message.channel) message.channel.send(this.notaMsg('fail', 'Algo salió mal con la conexión. Volviendo a intentar...'));
                     this.playSong(message, song);
                     throw `Error interno inesperado: ${error.stack}`;
                 });
@@ -377,7 +391,7 @@ export default abstract class Music {
                 .setDescription(
                     `⏲️Duración: \`${video.duration ? ConvertTime(video.duration) : 'S/D'}\`\nRepetir: \`${
                         !subscription.loop ? 'Desactivado' : subscription.loop == 'single' ? '🔂 Una Canción' : '🔁 Toda la cola de reproducción'
-                    }\`\n⏭En cola: \`${subscription.queue.findIndex((sg) => sg.id == video.id) + 1}/${subscription?.queue.length}\``
+                    }\`\n⏭En cola: \`${subscription.queue.findIndex((sg) => sg.id == video.id) + 1}/${subscription.queue.length}\``
                 )
                 .setFooter('Por StarMusic', 'https://i.imgur.com/WKD5uUL.png');
             if (this._show_name)
@@ -390,7 +404,7 @@ export default abstract class Music {
 
             message.channel.send(
                 `🔊Escuchando ahora: **${video.title}** [Video](${video.url})\n⏭En cola: \`${subscription.queue.findIndex((sg) => sg.id == video.id) + 1}/${
-                    subscription?.queue.length
+                    subscription.queue.length
                 }\`\n👥Vistas: \`${video.views ? ConvertString(video.views) : 'S/D'}\`\nPor StarMusic ${solicitado}`
             );
         }
@@ -407,12 +421,14 @@ export default abstract class Music {
         const voiceConnection = this._subscriptions.get(message.guild.id);
         if (!voiceConnection) return;
         // const dispatcher = voiceConnection.dispatcher;
+
         if (message.channel.type != 'dm' && message.channel.permissionsFor(message.guild.me!)!.has('EMBED_LINKS')) {
             const embed = new MessageEmbed()
                 .setColor(this._embed_color)
                 .addField(`Reproducción Actual: 00:00 :⏲: ${res.duration ? ConvertTime(res.duration) : '00:00'}`, this._emoji + '────────────────────────────── [0%]');
 
-            message.channel.send({ embeds: [embed] }); /* .then((m) => {
+            message.channel.send({ embeds: [embed] });
+            /* .then((m) => {
                 const tiempoM = setInterval(() => {
                     const duracionD = dispatcher ? dispatcher.streamTime : undefined;
 
@@ -446,39 +462,35 @@ export default abstract class Music {
                     }
                 }, 3000);
             }); */
-        } else
-            message.channel.send(
-                `Reproducción Actual: 0:0 :⏲: 0:0
-          \n\n${this._emoji}────────────────────────────── [0%]`
-            );
+        } else message.channel.send(`Reproducción Actual: 0:0 :⏲: 0:0\n\n${this._emoji}────────────────────────────── [0%]`);
         /* .then((m) => {
-                    const tiempoM = setInterval(() => {
-                        const voiceConnection = this._subscriptions.get(message.guild.id);
-                        if (voiceConnection) {
-                            const dispatcher = voiceConnection.dispatcher;
-                            const duracionD = dispatcher ? dispatcher.streamTime : false;
+            const tiempoM = setInterval(() => {
+                const voiceConnection = this._subscriptions.get(message.guild.id);
+                if (voiceConnection) {
+                    const dispatcher = voiceConnection.dispatcher;
+                    const duracionD = dispatcher ? dispatcher.streamTime : false;
 
-                            if (duracionD) {
-                                dispatcher.on('finish', () => clearInterval(tiempoM));
-                                dispatcher.on('error', () => clearInterval(tiempoM));
-                                let texto: string;
+                    if (duracionD) {
+                        dispatcher.on('finish', () => clearInterval(tiempoM));
+                        dispatcher.on('error', () => clearInterval(tiempoM));
+                        let texto: string;
 
-                                if (res.duration) {
-                                    let porcentaje = (duracionD * 100) / (res.duration * 1000);
-                                    porcentaje = Math.trunc(porcentaje);
-                                    const l = '─'; // 68
-                                    let por = (porcentaje * 30) / 100;
-                                    por = Math.trunc(por);
+                        if (res.duration) {
+                            let porcentaje = (duracionD * 100) / (res.duration * 1000);
+                            porcentaje = Math.trunc(porcentaje);
+                            const l = '─'; // 68
+                            let por = (porcentaje * 30) / 100;
+                            por = Math.trunc(por);
 
-                                    const progreso = `${l.repeat(por)}${this._emoji}${l.repeat(30 - por)} [${porcentaje}%]`;
-                                    texto = `Reproducción Actual: ${ConvertTime(duracionD / 1000)} :⏲: ${ConvertTime(res.duration)}\n\n${progreso}`;
-                                } else texto = 'Reproducción Actual:' + ConvertTime(duracionD / 1000) + ' ⏲';
+                            const progreso = `${l.repeat(por)}${this._emoji}${l.repeat(30 - por)} [${porcentaje}%]`;
+                            texto = `Reproducción Actual: ${ConvertTime(duracionD / 1000)} :⏲: ${ConvertTime(res.duration)}\n\n${progreso}`;
+                        } else texto = 'Reproducción Actual:' + ConvertTime(duracionD / 1000) + ' ⏲';
 
-                                m.edit(texto);
-                            }
-                        }
-                    }, 2000);
-                }); */
+                        m.edit(texto);
+                    }
+                }
+            }, 2000);
+        }); */
     }
 
     protected async sendMessageAddQueue(message: Message, video: Song): Promise<void> {
@@ -506,7 +518,7 @@ export default abstract class Music {
 
             message.channel.send(
                 `⏭️Agregado a cola: **${video.title}** [Video](${video.url})\n⏲️Duración: \`${video.duration ? ConvertTime(video.duration) : 'S/D'}\`\nEn cola: \`${
-                    subscription?.queue.length
+                    subscription.queue.length
                 }\`\nPor StarMusic ${solicitado}`
             );
         }

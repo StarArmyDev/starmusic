@@ -2,7 +2,7 @@
     "name": "starmusic",
     "version": "3.0.0-dev",
     "description": "Reproduce tu música fácilmente, en español y sin complicaciones.",
-    "main": "./lib/index",
+    "main": "./lib/main",
     "types": "./src/index.d.ts",
     "scripts": {
         "docs": "typedoc",

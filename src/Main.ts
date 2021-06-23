@@ -13,6 +13,13 @@ import { Video } from 'popyt';
 import Music from './Music';
 import ytpl from 'ytpl';
 
+/**
+ * Módulo de música para bots en Discord.js con el que podrás implementar la capacidad de reproducir
+ * música a tus bots, siendo fácil y en español.
+ *
+ * @author DavichoStar#8104
+ * @see https://discord.gg/DsYhNKd
+ */
 export default class StarMusic extends Music {
     play(message: Message, search: string): void {
         if (!message.guild || !message.member) message.reply(this.notaMsg('fail', 'No estas en un servidor.'));
@@ -489,8 +496,7 @@ export default class StarMusic extends Music {
         else {
             const cancion = subscription.queue.find((_, i) => i == song - 1);
             if (!cancion) message.reply(this.notaMsg('fail', 'No se pudo encontrar ese video o algo salió mal.'));
-
-            if (cancion.autorID == message.author.id || this.isDj(message.member) || this.isAdmin(message.member)) {
+            else if (cancion.autorID == message.author.id || this.isDj(message.member) || this.isAdmin(message.member)) {
                 subscription.removeQueue(song - 1);
                 message.channel.send(this.notaMsg('note', `Eliminado:  \`${cancion.title}\``));
             } else message.reply(this.notaMsg('fail', 'No puedes eliminar esta canción.'));
@@ -512,3 +518,7 @@ export default class StarMusic extends Music {
         }
     }
 }
+
+export * from './Suscription';
+export * from './Song';
+export { Music };

@@ -11,7 +11,7 @@
 
 </div>
 
-Módulo fácil de implementar para tu bot de Discord con el cual podrás crear bots de música en español enfocada para discord.js.
+Módulo de música para bots en Discord.js con el que podrás implementar la capacidad de reproducir música a tus bots, siendo fácil y en español.
 
 Para ver los cambios recientes, no olvides leer el documento [CHANGELOG.md](./CHANGELOG.md)
 
