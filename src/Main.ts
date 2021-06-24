@@ -6,9 +6,9 @@
 /*       Servidor de Soporte: https://discord.gg/DsYhNKd      */
 /*                                                            */
 /* ========================================================== */
+import { APIMessage, CommandInteraction, GuildMember, Message, MessageEmbed } from 'discord.js';
 import { AudioPlayerStatus } from '@discordjs/voice';
 import { ConvertString, ConvertTime } from './libs';
-import { Message, MessageEmbed } from 'discord.js';
 import { Video } from 'popyt';
 import Music from './Music';
 import ytpl from 'ytpl';
@@ -21,33 +21,37 @@ import ytpl from 'ytpl';
  * @see https://discord.gg/DsYhNKd
  */
 export default class StarMusic extends Music {
-    play(message: Message, search: string): void {
-        if (!message.guild || !message.member) message.reply(this.notaMsg('fail', 'No estas en un servidor.'));
-        else if (!message.member.voice.channel) message.reply(this.notaMsg('fail', 'No estas en un canal de voz.'));
-        else if (!search) message.reply(this.notaMsg('fail', '¡No has colocado nada que buscar!'));
-        else if (this._just_dj && (this.isDj(message.member) || this.isAdmin(message.member)))
-            message.reply(this.notaMsg('fail', 'No tienes permitido reproducír música ya que no cuentas con el rol correspondiente.'));
+    async play(message: Message | CommandInteraction, search: string): Promise<void> {
+        if ((message as CommandInteraction).commandID) await (message as CommandInteraction).defer({ ephemeral: true });
+
+        const member = message.member as GuildMember;
+        if (!message.guild || !member) this.sendReply(message, this.notaMsg('fail', 'No estas en un servidor.'));
+        else if (!member.voice?.channel) this.sendReply(message, this.notaMsg('fail', 'No estas en un canal de voz.'));
+        else if (!search) this.sendReply(message, this.notaMsg('fail', '¡No has colocado nada que buscar!'));
+        else if (this._just_dj && (this.isDj(message.member as GuildMember) || this.isAdmin(message.member as GuildMember)))
+            this.sendReply(message, this.notaMsg('fail', 'No tienes permitido reproducír música ya que no cuentas con el rol correspondiente.'));
         else {
             const song = this.getSong(message);
             let subscription = this._subscriptions.get(message.guild.id);
 
-            if (subscription?.queue.length >= this._max_tail && this._max_tail > 0) message.reply(this.notaMsg('fail', 'Tamaño máximo de cola alcanzado'));
-            else if (subscription?.queueLock) message.reply(this.notaMsg('fail', 'Procesando una solicitud previa, intente de nuevo en unos segundos.'));
+            if (subscription?.queue.length >= this._max_tail && this._max_tail > 0) this.sendReply(message, this.notaMsg('fail', 'Tamaño máximo de cola alcanzado'));
+            else if (subscription?.queueLock) this.sendReply(message, this.notaMsg('fail', 'Procesando una solicitud previa, intente de nuevo en unos segundos.'));
             else {
                 let searchstring = search.trim();
 
                 if (searchstring.startsWith('http') && searchstring.includes('list=')) {
-                    message.channel.send(this.notaMsg('search', 'Buscando elementos de la lista de reproducción~'));
+                    await this.sendReply(message, { content: this.notaMsg('search', 'Buscando elementos de la lista de reproducción~') });
                     let playid = searchstring.toString().split('list=')[1];
 
                     if (playid.toString().includes('?')) playid = playid.split('?')[0];
                     if (playid.toString().includes('&t=')) playid = playid.split('&t=')[0];
 
                     ytpl(playid)
-                        .then((result) => {
-                            if (result.items.length <= 0) return message.reply(this.notaMsg('fail', 'No se pudo obtener ningún video de esa lista de reproducción.'));
+                        .then(async (result): Promise<Message | APIMessage> => {
+                            if (result.items.length <= 0)
+                                return this.sendReply(message, this.notaMsg('fail', 'No se pudo obtener ningún video de esa lista de reproducción.'));
                             if (result.items.length > this._max_tail)
-                                return message.reply(this.notaMsg('fail', `Demasiados videos para poner en cola. Se permite un máximo de ${this._max_tail}.`));
+                                return this.sendReply(message, this.notaMsg('fail', `Demasiados videos para poner en cola. Se permite un máximo de ${this._max_tail}.`));
                             let index = 0;
                             let ran = 0;
 
@@ -68,60 +72,67 @@ export default class StarMusic extends Music {
 
                             result.items.forEach((video) => promesas.push(getVideo(video)));
 
-                            Promise.all(promesas)
-                                .then(() => {
-                                    if (subscription.queue.length > 0) {
-                                        const nextSong = subscription.queue.shift()!;
-                                        subscription.addedToQueue(nextSong);
-                                    }
+                            try {
+                                await Promise.all(promesas);
+                                if (subscription.queue.length > 0) {
+                                    const nextSong = subscription.queue.shift()!;
+                                    subscription.addedToQueue(nextSong);
+                                }
 
-                                    if (ran >= result.items.length)
-                                        if (index == 0) message.reply(this.notaMsg('fail', 'No pude obtener ninguna canción de esa lista de reproducción'));
-                                        else if (index == 1) message.channel.send(this.notaMsg('note', '⏭️En cola una canción.'));
-                                        else if (index > 1) message.channel.send(this.notaMsg('note', `️⏭️️En cola ${index} canciones.`));
-                                })
-                                .catch(console.warn);
+                                if (ran >= result.items.length)
+                                    if (index == 0) this.sendReply(message, this.notaMsg('fail', 'No pude obtener ninguna canción de esa lista de reproducción'));
+                                    else if (index == 1) message.channel.send(this.notaMsg('note', '⏭️En cola una canción.'));
+                                    else if (index > 1) message.channel.send(this.notaMsg('note', `️⏭️️En cola ${index} canciones.`));
+                            } catch (err) {
+                                console.warn(err);
+                            }
                         })
-                        .catch(() => message.reply(this.notaMsg('fail', 'Algo salió mal al buscar esa lista de reproducción')));
+                        .catch((): Promise<Message | APIMessage> => this.sendReply(message, this.notaMsg('fail', 'Algo salió mal al buscar esa lista de reproducción')));
                 } else {
                     if (searchstring.includes('https://youtu.be/') || (searchstring.includes('https://www.youtube.com/') && searchstring.includes('&')))
                         searchstring = searchstring.split('&')[0];
-                    message.channel.send(this.notaMsg('search', `\`Buscando: ${searchstring}\`...`));
+                    await this.sendReply(message, { content: this.notaMsg('search', `\`Buscando: ${searchstring}\`...`) });
 
                     this.createSong(message, searchstring)
                         .then(async (song) => {
                             const lastSong = this.getSong(message);
                             if (lastSong?.id == song.id || subscription?.queue.find((c) => c.id == song.id))
-                                return message.reply(this.notaMsg('fail', 'Esta canción ya está en la cola.'));
+                                return this.sendReply(message, this.notaMsg('fail', 'Esta canción ya está en la cola.'));
 
                             this.playSong(message, song);
                         })
-                        .catch(() => message.reply(this.notaMsg('fail', 'No se econtró ningún video.')));
+                        .catch((): Promise<Message | APIMessage> => this.sendReply(message, this.notaMsg('fail', 'No se econtró ningún video.')));
                 }
             }
         }
     }
 
-    async search(message: Message, search: string): Promise<void> {
-        if (!message.guild || !message.member) message.reply(this.notaMsg('fail', 'No estas en un servidor.'));
-        else if (!message.member.voice.channel) message.reply(this.notaMsg('fail', 'No estas en un canal de voz'));
+    async search(message: Message | CommandInteraction, search: string): Promise<void> {
+        const member = message.member as GuildMember;
+        if (!message.guild || !member) message.reply(this.notaMsg('fail', 'No estas en un servidor.'));
+        else if (!member.voice?.channel) message.reply(this.notaMsg('fail', 'No estas en un canal de voz'));
         else if (!search) message.reply(this.notaMsg('fail', 'No especificaste algo qué buscar'));
         else {
             let subscription = this._subscriptions.get(message.guild.id);
             // if (subscription?.isRadio) this.leave(message);
             if (!subscription && message.guild) subscription = await this.connectBot(message);
-            if (this._just_dj && !this.isDj(message.member) && !this.isAdmin(message.member))
+            if (this._just_dj && !this.isDj(member) && !this.isAdmin(member))
                 message.reply(this.notaMsg('fail', 'No tienes permitido reproducír música ya que no cuentas con el rol correspondiente.'));
             else if (subscription!.queue.length >= this._max_tail && this._max_tail > 0) message.reply(this.notaMsg('fail', 'Tamaño máximo de cola alcanzado!'));
             else {
                 const searchstring = search.trim();
-                message.channel
-                    .send(this.notaMsg('search', `Buscando: \`${searchstring}\``))
+                message
+                    .reply(this.notaMsg('search', `Buscando: \`${searchstring}\``))
                     .then((response) => {
                         this._youtube
                             .searchVideos(searchstring, 10)
-                            .then((searchResult) => {
-                                if (searchResult.results.length == 0) return response.edit(this.notaMsg('fail', 'Error al obtener resultados de búsqueda.'));
+                            .then(async (searchResult): Promise<Message | void> => {
+                                if (searchResult.results.length == 0) {
+                                    const mensaje = this.notaMsg('fail', 'Error al obtener resultados de búsqueda.');
+                                    if (response) response.edit(mensaje);
+                                    else (message as CommandInteraction).editReply(mensaje);
+                                    return;
+                                }
 
                                 const promesas: Promise<void>[] = [];
                                 const videos: { id: string; title: string; url: string }[] = [];
@@ -132,74 +143,103 @@ export default class StarMusic extends Music {
 
                                 searchResult.results.forEach((video) => promesas.push(getVideo(video)));
 
-                                Promise.all(promesas)
-                                    .then(() => {
-                                        const process = (firstMsg: Message): void => {
-                                            message.channel
-                                                .awaitMessages(
-                                                    (m: Message) =>
-                                                        m.author.id == message.author.id &&
-                                                        ((parseInt(m.content) > 0 &&
-                                                            parseInt(m.content) <= (searchResult.results.length > 10 ? 10 : searchResult.results.length)) ||
-                                                            ['cancel', 'cancelar'].includes(m.content.trim().toLowerCase())),
-                                                    {
-                                                        max: 1,
-                                                        time: 60000,
-                                                        errors: ['time']
+                                try {
+                                    await Promise.all(promesas);
+                                    const process = (firstMsg: Message): void => {
+                                        message.channel
+                                            .awaitMessages(
+                                                (m: Message) =>
+                                                    m.author.id == message.member.user.id &&
+                                                    ((parseInt(m.content) > 0 &&
+                                                        parseInt(m.content) <= (searchResult.results.length > 10 ? 10 : searchResult.results.length)) ||
+                                                        ['cancel', 'cancelar'].includes(m.content.trim().toLowerCase())),
+                                                {
+                                                    max: 1,
+                                                    time: 60000,
+                                                    errors: ['time']
+                                                }
+                                            )
+                                            .then(async (collected) => {
+                                                const collectedArray = collected.first()!;
+                                                const mcon = collectedArray.content.trim().toLowerCase();
+
+                                                if (['cancel', 'cancelar'].includes(mcon)) {
+                                                    const mensaje: unknown = { content: '````xl\nBúsqueda cancelada.\n```', embeds: [] };
+                                                    if (response) firstMsg.edit(mensaje);
+                                                    else (message as CommandInteraction).editReply(mensaje);
+                                                }
+
+                                                firstMsg.delete();
+                                                collectedArray.delete().catch(() => null);
+
+                                                const cancion = videos[parseInt(mcon) - 1];
+
+                                                try {
+                                                    const song = await this.createSong(message, cancion.url);
+                                                    const lastSong = this.getSong(message);
+                                                    if (lastSong?.id == song.id || subscription?.queue.find((c) => c.id == song.id)) {
+                                                        const mensaje = this.notaMsg('fail', 'Esta canción ya está en la cola.');
+                                                        if (response) message.reply(mensaje);
+                                                        else (message as CommandInteraction).followUp(mensaje);
+                                                        return;
                                                     }
-                                                )
-                                                .then((collected) => {
-                                                    const collectedArray = collected.first()!;
-                                                    const mcon = collectedArray.content.trim().toLowerCase();
 
-                                                    if (['cancel', 'cancelar'].includes(mcon))
-                                                        return firstMsg.edit({ content: this.notaMsg('note', 'Búsqueda cancelada.'), embeds: [] });
+                                                    this.playSong(message, song);
+                                                } catch (e) {
+                                                    const mensaje = this.notaMsg('fail', 'No se econtró ningún video.');
+                                                    if (response) message.reply(mensaje);
+                                                    else (message as CommandInteraction).followUp(mensaje);
+                                                    return;
+                                                }
+                                            })
+                                            .catch(() => {
+                                                const mensaje: unknown = { content: '````xl\nBúsqueda cancelada.\n```', embeds: [] };
+                                                if (response) firstMsg.edit(mensaje);
+                                                else (message as CommandInteraction).editReply(mensaje);
+                                                return;
+                                            });
+                                    };
 
-                                                    firstMsg.delete();
+                                    if (message.channel.type == 'dm' || message.channel.permissionsFor(message.guild.me).has('EMBED_LINKS')) {
+                                        const embed = new MessageEmbed().setColor(this._embed_color).setTitle('= Elige tu video =');
 
-                                                    const cancion = videos[parseInt(mcon) - 1];
+                                        videos.map((video_3, index) => embed.addField(`${index + 1}`, `[${this.notaMsg('font', video_3.title)}](${video_3.url})`));
+                                        if (this._show_name)
+                                            embed.setFooter(
+                                                `Buscado por: ${message.member.user.username}`,
+                                                (message as Message).author
+                                                    ? (message as Message).author.displayAvatarURL()
+                                                    : (message as CommandInteraction).user.displayAvatarURL()
+                                            );
 
-                                                    this.createSong(message, cancion.url)
-                                                        .then(async (song) => {
-                                                            const lastSong = this.getSong(message);
-                                                            if (lastSong?.id == song.id || subscription?.queue.find((c) => c.id == song.id))
-                                                                return message.reply(this.notaMsg('fail', 'Esta canción ya está en la cola.'));
-
-                                                            this.playSong(message, song);
-                                                        })
-                                                        .catch(() => message.reply(this.notaMsg('fail', 'No se econtró ningún video.')));
-                                                })
-                                                .catch(() => firstMsg.edit({ content: '````xl\nBúsqueda cancelada.\n```', embeds: [] }));
-                                        };
-
-                                        if (message.channel.type == 'dm' || message.channel.permissionsFor(message.guild.me).has('EMBED_LINKS')) {
-                                            const embed = new MessageEmbed().setColor(this._embed_color).setTitle('= Elige tu video =');
-
-                                            videos.map((video, index) => embed.addField(`${index + 1}`, `[${this.notaMsg('font', video.title)}](${video.url})`));
-                                            if (this._show_name) embed.setFooter(`Buscado por: ${message.author.username}`, message.author.displayAvatarURL());
-
-                                            message.channel.send({ embeds: [embed] }).then((m) => process(m));
-                                        } else {
-                                            const vids = videos
-                                                .map(
-                                                    (video, index) =>
-                                                        `**${index + 1}:** __${video.title
-                                                            .replace(/\\/g, '\\\\')
-                                                            .replace(/`/g, '\\`')
-                                                            .replace(/\* /g, '\\*')
-                                                            .replace(/_/g, '\\_')
-                                                            .replace(/~/g, '\\~')
-                                                            .replace(/`/g, '\\`')}__`
-                                                )
-                                                .join('\n\n');
-                                            message.channel
-                                                .send(`\`\`\`yml\n= Elige tu video =\n\`\`\`${vids}\n\n= Ponga \`cancelar\` o \`cancel\` para cancelar la búsqueda.`)
-                                                .then((m) => process(m));
-                                        }
-                                    })
-                                    .catch(console.warn);
+                                        if (response) message.channel.send({ embeds: [embed] }).then((m) => process(m));
+                                        else (message as CommandInteraction).followUp({ embeds: [embed] }).then(async (m) => process(m as Message));
+                                    } else {
+                                        const vids = videos
+                                            .map(
+                                                (video_4, index_1) =>
+                                                    `**${index_1 + 1}:** __${video_4.title
+                                                        .replace(/\\/g, '\\\\')
+                                                        .replace(/`/g, '\\`')
+                                                        .replace(/\* /g, '\\*')
+                                                        .replace(/_/g, '\\_')
+                                                        .replace(/~/g, '\\~')
+                                                        .replace(/`/g, '\\`')}__`
+                                            )
+                                            .join('\n\n');
+                                        const mensaje = `\`\`\`yml\n= Elige tu video =\n\`\`\`${vids}\n\n= Ponga \`cancelar\` o \`cancel\` para cancelar la búsqueda.`;
+                                        if (response) message.channel.send(mensaje).then((m) => process(m));
+                                        else (message as CommandInteraction).followUp(mensaje).then((m) => process(m as Message));
+                                    }
+                                } catch (err) {
+                                    return console.warn(err);
+                                }
                             })
-                            .catch(() => response.edit(this.notaMsg('fail', 'Error al obtener resultados de búsqueda.')));
+                            .catch(() => {
+                                const mensaje = this.notaMsg('fail', 'Error al obtener resultados de búsqueda.');
+                                if (response) response.edit(mensaje);
+                                else (message as CommandInteraction).editReply(mensaje);
+                            });
                     })
                     .catch((err: Error) => {
                         throw new Error(`Interno Inesperado: ${err.stack}`);
@@ -209,7 +249,7 @@ export default class StarMusic extends Music {
     }
 
     // TODO Incompleto
-    radio(message: Message /* , stream?: string */): void {
+    radio(message: Message | CommandInteraction /* , stream?: string */): void {
         if (!message.guild || !message.member) return undefined;
 
         /* let servidores = this._subscriptions.get(message.guild.id);
@@ -273,72 +313,86 @@ export default class StarMusic extends Music {
             }); */
     }
 
-    pause(message: Message): void {
-        if (!message.guild || !message.member) return;
+    async pause(message: Message | CommandInteraction): Promise<void> {
+        if ((message as CommandInteraction).commandID) await (message as CommandInteraction).defer({ ephemeral: true });
+
+        const member = message.member as GuildMember;
+        if (!message.guild || !member?.voice) return;
 
         const song = this.getSong(message);
         const subscription = this._subscriptions.get(message.guild.id);
-        if (!song) message.reply(this.notaMsg('fail', 'No se está reproduciendo música.'));
-        // else if (message.guild! && subscription.isRadio) message.reply(this.notaMsg('fail', 'No se puede usar en modo radio.'));
-        else if (song.autorID != message.author.id && message.member && !this.isAdmin(message.member) && !this._any_pause)
-            message.reply(this.notaMsg('fail', 'No tienes permiso de pausar.'));
-        else if (subscription.audioPlayer.state.status == AudioPlayerStatus.Paused) message.reply(this.notaMsg('fail', '¡La música ya está en pausa!'));
+        if (!song) this.sendReply(message, this.notaMsg('fail', 'No se está reproduciendo música.'));
+        // else if (message.guild! && subscription.isRadio) this.sendReply(message, this.notaMsg('fail', 'No se puede usar en modo radio.'));
+        else if (song.autorID != member.id && message.member && !this.isAdmin(member) && !this._any_pause)
+            this.sendReply(message, this.notaMsg('fail', 'No tienes permiso de pausar.'));
+        else if (subscription.audioPlayer.state.status == AudioPlayerStatus.Paused) this.sendReply(message, this.notaMsg('fail', '¡La música ya está en pausa!'));
         else {
             subscription.audioPlayer.pause();
-            message.channel.send(this.notaMsg('note', 'Reproducción en pausa.'));
+            const mensaje = this.notaMsg('note', 'Reproducción en pausa.');
+            this.sendReply(message, mensaje);
         }
     }
 
-    resume(message: Message): void {
-        if (!message.guild || !message.member) return undefined;
+    async resume(message: Message | CommandInteraction): Promise<void> {
+        if ((message as CommandInteraction).commandID) await (message as CommandInteraction).defer({ ephemeral: true });
+
+        const member = message.member as GuildMember;
+        if (!message.guild || !member?.voice) return undefined;
 
         const song = this.getSong(message);
         const subscription = this._subscriptions.get(message.guild.id);
-        if (!subscription) message.reply(this.notaMsg('fail', 'No se está reproduciendo música'));
-        // else if (subscription.isRadio) message.reply(this.notaMsg('fail', 'No se puede usar en modo radio.'));
-        else if (!this._any_pause && song.autorID != message.author.id && !this.isAdmin(message.member))
-            message.reply(this.notaMsg('fail', 'No tienes permiso de reanudar.'));
-        else if (subscription.audioPlayer.state.status != AudioPlayerStatus.Paused) message.reply(this.notaMsg('fail', 'La música no está páusada.'));
+        if (!subscription) this.sendReply(message, this.notaMsg('fail', 'No se está reproduciendo música'));
+        // else if (subscription.isRadio) this.sendReply(message, this.notaMsg('fail', 'No se puede usar en modo radio.'));
+        else if (!this._any_pause && song.autorID != member.id && !this.isAdmin(member)) this.sendReply(message, this.notaMsg('fail', 'No tienes permiso de reanudar.'));
+        else if (subscription.audioPlayer.state.status != AudioPlayerStatus.Paused) this.sendReply(message, this.notaMsg('fail', 'La música no está páusada.'));
         else {
             subscription.audioPlayer.unpause();
-            message.channel.send(this.notaMsg('note', 'Reproducción Reanudada.'));
+            const mensaje = this.notaMsg('note', 'Reproducción Reanudada.');
+            this.sendReply(message, mensaje);
         }
     }
 
-    skip(message: Message): void {
-        if (!message.guild || !message.member) return undefined;
+    async skip(message: Message | CommandInteraction): Promise<void> {
+        if ((message as CommandInteraction).commandID) await (message as CommandInteraction).defer({ ephemeral: true });
+
+        const member = message.member as GuildMember;
+        if (!message.guild || !member?.voice) return undefined;
 
         const subscription = this._subscriptions.get(message.guild.id);
         const song = this.getSong(message);
-        if (!song || !subscription) message.reply(this.notaMsg('fail', 'No se está reproduciendo música.'));
-        // else if (subscription.isRadio) message.reply(this.notaMsg('fail', 'No se puede usar en modo radio.'));
-        else if (subscription.queue.length == 0) message.reply(this.notaMsg('fail', 'No puedes omitir la canción porque no hay una cola de reproducción.'));
-        else if (!this._any_skip && song.autorID != message.author.id && !this.isAdmin(message.member))
-            message.reply(this.notaMsg('fail', 'No tienes permiso de omitir esta canción.'));
-        else if (subscription.loop == 'single') message.reply(this.notaMsg('fail', 'No se puede omitir mientras que el bucle está configurado como `Una canción`'));
+        if (!song || !subscription) this.sendReply(message, this.notaMsg('fail', 'No se está reproduciendo música.'));
+        // else if (subscription.isRadio) this.sendReply(message, this.notaMsg('fail', 'No se puede usar en modo radio.'));
+        else if (subscription.queue.length == 0) this.sendReply(message, this.notaMsg('fail', 'No puedes omitir la canción porque no hay una cola de reproducción.'));
+        else if (!this._any_skip && song.autorID != member.id && !this.isAdmin(member))
+            this.sendReply(message, this.notaMsg('fail', 'No tienes permiso de omitir esta canción.'));
+        else if (subscription.loop == 'single')
+            this.sendReply(message, this.notaMsg('fail', 'No se puede omitir mientras que el bucle está configurado como `Una canción`'));
         else {
             if (subscription.audioPlayer.state.status == AudioPlayerStatus.Paused) subscription.audioPlayer.unpause();
             subscription.audioPlayer.stop();
-            message.channel.send(this.notaMsg('note', 'Canción omitida, espere un momento...'));
+            const mensaje = this.notaMsg('note', 'Canción omitida, espere un momento...');
+            this.sendReply(message, mensaje);
         }
     }
 
-    leave(message: Message): void {
-        if (!message.guild || !message.member) return undefined;
+    leave(message: Message | CommandInteraction): void {
+        const member = message.member as GuildMember;
+        if (!message.guild || !member?.voice) return undefined;
 
         const song = this.getSong(message);
         const subscription = this._subscriptions.get(message.guild.id);
-        if (this._any_take_out || this.isAdmin(message.member) || song?.autorID == message.author.id)
+        if (this._any_take_out || this.isAdmin(member) || song?.autorID == member.id)
             if (!subscription) message.reply(this.notaMsg('fail', 'No estoy en un canal de voz.'));
             else {
                 subscription.stop();
                 subscription.voiceConnection.destroy();
-                message.channel.send(this.notaMsg('note', 'Dejé con éxito el canal de voz.'));
+                const mensaje = this.notaMsg('note', 'Dejé con éxito el canal de voz.');
+                message.reply(mensaje);
             }
         else message.reply(this.notaMsg('fail', 'Me temo que no tienes permiso de sacarme del canal.'));
     }
 
-    np(message: Message): void {
+    np(message: Message | CommandInteraction): void {
         if (!message.guild || !message.member) return undefined;
 
         const song = this.getSong(message);
@@ -366,48 +420,52 @@ export default class StarMusic extends Music {
                         }\`\n👍Me Gusta: \`${song.likes ? ConvertString(song.likes) : 'S/D'}\`\n👎No Me Gusta: \`${song.dislikes ? ConvertString(song.dislikes) : 'S/D'}\`
                         `
                     );
-                if (this._show_name) embed.setFooter(`Solicitado por: ${resMem?.username || `Usuario desconocido (${song.autorID})`}`, 'https://i.imgur.com/WKD5uUL.png');
-
-                message.channel.send({ embeds: [embed] });
+                if (this._show_name)
+                    embed.setFooter(`Por StarMusic | Solicitado por: ${resMem?.username || `Usuario desconocido (${song.autorID})`}`, 'https://i.imgur.com/WKD5uUL.png');
+                message.reply({ embeds: [embed] });
             } else {
                 let solicitado = '';
                 if (this._show_name) solicitado = `| Solicitado por: ${resMem?.tag || `<@${song.autorID}>`}`;
 
-                message.channel.send(
-                    `🔊Escuchando: **${song.title}** [Video](${song.url})\n⏭En Cola: \`${subscription.queue.length}\`📅Publicado el: \`${
-                        song.datePublished || 'S/D'
-                    }\`\n⏲️Duración: \`${song.duration ? ConvertTime(song.duration) : 'S/D'}\`\n👀Vistas: \`${
-                        song.views ? ConvertString(song.views) : 'S/D'
-                    }\`\n👍Me Gusta: \`${song.likes ? ConvertString(song.likes) : 'S/D'}\`\n👎No Me Gusta: \`${
-                        song.dislikes ? ConvertString(song.dislikes) : 'S/D'
-                    }\`\n\nPor StarMusic ${solicitado}`
-                );
+                const mensaje = `🔊Escuchando: **${song.title}** [Video](${song.url})\n⏭En Cola: \`${subscription.queue.length}\`📅Publicado el: \`${
+                    song.datePublished || 'S/D'
+                }\`\n⏲️Duración: \`${song.duration ? ConvertTime(song.duration) : 'S/D'}\`\n👀Vistas: \`${
+                    song.views ? ConvertString(song.views) : 'S/D'
+                }\`\n👍Me Gusta: \`${song.likes ? ConvertString(song.likes) : 'S/D'}\`\n👎No Me Gusta: \`${
+                    song.dislikes ? ConvertString(song.dislikes) : 'S/D'
+                }\`\n\nPor StarMusic ${solicitado}`;
+                message.reply(mensaje);
             }
             // this.progressBar(message, song);
         }
     }
 
-    async repeat(message: Message, song?: 0 | 1 | 2 | 3): Promise<void> {
+    async repeat(message: Message | CommandInteraction, song?: 0 | 1 | 2 | 3): Promise<void> {
+        if ((message as CommandInteraction).commandID) await (message as CommandInteraction).defer({ ephemeral: true });
+
         if (!message.guild || !message.member) return undefined;
 
-        if (song && (song < 0 || song > 3)) message.reply(this.notaMsg('fail', 'Solamente puedes colocar 0, 1, 2 o 3'));
+        if (song && (song < 0 || song > 3)) this.sendReply(message, this.notaMsg('fail', 'Solamente puedes colocar 0, 1, 2 o 3'));
 
         const subscription = this._subscriptions.get(message.guild.id);
-        if (!subscription) message.reply(this.notaMsg('fail', 'No se ha encontrado ninguna cola para este servidor'));
-        // else if (subscription.isRadio) message.reply(this.notaMsg('fail', 'No se puede usar en modo radio.'));
+        if (!subscription) this.sendReply(message, this.notaMsg('fail', 'No se ha encontrado ninguna cola para este servidor'));
+        // else if (subscription.isRadio) this.sendReply(message, this.notaMsg('fail', 'No se puede usar en modo radio.'));
         else if (song == 1 || (!song && !subscription.loop)) {
             subscription.setLoop('single');
-            message.channel.send(this.notaMsg('note', '¡Repetir una cancíon habilitado! :repeat_one:'));
+            const mensaje = this.notaMsg('note', '¡Repetir una cancíon habilitado! :repeat_one:');
+            this.sendReply(message, mensaje);
         } else if (song == 2 || (!song && subscription.loop == 'single')) {
             subscription.setLoop('all');
-            message.channel.send(this.notaMsg('note', '¡Repetir Cola habilitada! :repeat:'));
+            const mensaje = this.notaMsg('note', '¡Repetir Cola habilitada! :repeat:');
+            this.sendReply(message, mensaje);
         } else if (song == 0 || song == 3 || (!song && subscription.loop == 'all')) {
             subscription.setLoop();
-            message.channel.send(this.notaMsg('note', '¡Repetir canciones deshabilitado! :arrow_forward:'));
+            const mensaje = this.notaMsg('note', '¡Repetir canciones deshabilitado! :arrow_forward:');
+            this.sendReply(message, mensaje);
         }
     }
 
-    async queue(message: Message, songSearch?: number): Promise<void> {
+    async queue(message: Message | CommandInteraction, songSearch?: number): Promise<void> {
         if (!message.guild || !message.member) return undefined;
 
         const subscription = this._subscriptions.get(message.guild.id);
@@ -434,7 +492,8 @@ export default class StarMusic extends Music {
                         .addField('Posición', `${videoIndex + 1}`, true)
                         .setThumbnail(`https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`);
                     if (this._show_name) embed.setFooter(`Solicitado por: ${resMem?.username || `Usuario Desconocido (${video.autorID})`}`, resMem?.displayAvatarURL());
-                    message.channel.send({ embeds: [embed] });
+
+                    message.reply({ embeds: [embed] });
                 }
             } else if (subscription.queue.length > 11) {
                 const pages: string[] = [];
@@ -449,44 +508,57 @@ export default class StarMusic extends Music {
                     .setAuthor('Canciones en cola', message.client.user?.displayAvatarURL())
                     .setFooter(`Página ${page} de ${pages.length}`)
                     .setDescription(pages[page - 1]);
-                message.channel.send({ embeds: [embed] }).then(async (m) => {
+                if ((message as CommandInteraction).commandID)
+                    message.reply({ embeds: [embed], ephemeral: true }).then(async () => response((await (message as CommandInteraction).fetchReply()) as Message));
+                else message.channel.send({ embeds: [embed] }).then((m) => response(m));
+
+                const response = async (m: Message): Promise<void> => {
                     await m.react('⏪');
                     await m.react('⏩');
 
-                    m.createReactionCollector((reaction, user) => reaction.emoji.name === '⏩' && user.id === message.author.id, {
+                    m.createReactionCollector((reaction, user) => reaction.emoji.name === '⏩' && user.id === message.member.user.id, {
                         time: 120000
                     }).on('collect', () => {
                         if (page === pages.length) return;
                         page++;
                         embed.setDescription(pages[page - 1]);
-                        embed.setFooter(`Página ${page} de ${pages.length}`, message.author.displayAvatarURL());
+                        embed.setFooter(
+                            `Página ${page} de ${pages.length}`,
+                            (message as Message).author ? (message as Message).author.displayAvatarURL() : (message as CommandInteraction).user.displayAvatarURL()
+                        );
                         m.edit({ embeds: [embed] });
                     });
 
-                    m.createReactionCollector((reaction, user) => reaction.emoji.name === '⏪' && user.id === message.author.id, {
+                    m.createReactionCollector((reaction, user) => reaction.emoji.name === '⏪' && user.id === message.member.user.id, {
                         time: 120000
                     }).on('collect', () => {
                         if (page === 1) return;
                         page--;
                         embed.setDescription(pages[page - 1]);
-                        embed.setFooter(`Página ${page} de ${pages.length}`, message.author.displayAvatarURL());
+                        embed.setFooter(
+                            `Página ${page} de ${pages.length}`,
+                            (message as Message).author ? (message as Message).author.displayAvatarURL() : (message as CommandInteraction).user.displayAvatarURL()
+                        );
                         m.edit({ embeds: [embed] });
                     });
-                });
-            } else
-                message.channel.send({
-                    embeds: [
-                        embed
-                            .setAuthor('Canciones en cola', message.client.user?.displayAvatarURL())
-                            .setDescription(subscription.queue.map((video, i) => `**${i + 1}:** __${video.title}__`).join('\n\n'))
-                            .setFooter('Página 1 de 1', message.author.displayAvatarURL())
-                    ]
-                });
+                };
+            } else {
+                embed
+                    .setAuthor('Canciones en cola', message.client.user?.displayAvatarURL())
+                    .setDescription(subscription.queue.map((video, i) => `**${i + 1}:** __${video.title}__`).join('\n\n'))
+                    .setFooter(
+                        'Página 1 de 1',
+                        (message as Message).author ? (message as Message).author.displayAvatarURL() : (message as CommandInteraction).user.displayAvatarURL()
+                    );
+
+                message.reply({ embeds: [embed] });
+            }
         }
     }
 
-    remove(message: Message, song: number): void {
-        if (!message.guild || !message.member) return undefined;
+    remove(message: Message | CommandInteraction, song: number): void {
+        const member = message.member as GuildMember;
+        if (!message.guild || !member?.voice) return undefined;
 
         const subscription = this._subscriptions.get(message.guild.id);
         if (!subscription) message.reply(this.notaMsg('fail', 'No se ha encontrado ninguna cola para este servidor.'));
@@ -496,25 +568,30 @@ export default class StarMusic extends Music {
         else {
             const cancion = subscription.queue.find((_, i) => i == song - 1);
             if (!cancion) message.reply(this.notaMsg('fail', 'No se pudo encontrar ese video o algo salió mal.'));
-            else if (cancion.autorID == message.author.id || this.isDj(message.member) || this.isAdmin(message.member)) {
+            else if (cancion.autorID == member.id || this.isDj(member) || this.isAdmin(member)) {
                 subscription.removeQueue(song - 1);
-                message.channel.send(this.notaMsg('note', `Eliminado:  \`${cancion.title}\``));
+                const mensaje = this.notaMsg('note', `Eliminado:  \`${cancion.title}\``);
+
+                message.reply(mensaje);
             } else message.reply(this.notaMsg('fail', 'No puedes eliminar esta canción.'));
         }
     }
 
-    clear(message: Message): void {
-        if (!message.guild || !message.member) return undefined;
+    clear(message: Message | CommandInteraction): void {
+        const member = message.member as GuildMember;
+        if (!message.guild || !member?.voice) return undefined;
 
         const subscription = this._subscriptions.get(message.guild.id);
         if (!subscription) message.reply(this.notaMsg('fail', 'No se ha encontrado ninguna cola para este servidor..'));
         // else if (subscription.isRadio) message.reply(this.notaMsg('fail', 'No se puede usar en modo radio.'));
-        else if (this._just_dj && !this.isDj(message.member) && !this.isAdmin(message.member))
+        else if (this._just_dj && !this.isDj(member) && !this.isAdmin(member))
             message.reply(this.notaMsg('fail', 'Sólo los administradores o personas con rol de DJ pueden borrar la cola de reproducción.'));
         else {
             subscription.removeQueue();
 
-            message.channel.send(this.notaMsg('note', 'Cola borrada.'));
+            const mensaje = this.notaMsg('note', 'Cola borrada.');
+
+            message.reply(mensaje);
         }
     }
 }

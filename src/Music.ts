@@ -1,6 +1,6 @@
 import { AudioPlayerStatus, AudioResource, VoiceConnectionStatus, entersState, joinVoiceChannel } from '@discordjs/voice';
+import { APIMessage, CommandInteraction, GuildMember, Message, MessageEmbed, MessageOptions, Snowflake } from 'discord.js';
 import { Colors, ColorsFlags, ConvertString, ConvertTime, resolveColor } from './libs';
-import { GuildMember, Message, MessageEmbed, Snowflake } from 'discord.js';
 import { MusicSubscription } from './Suscription';
 import { Song, SongData } from './Song';
 import popyt from 'popyt';
@@ -124,51 +124,51 @@ export default abstract class Music {
      * @param message Un mensaje de Discord.
      * @param search Canción a reproducir.
      */
-    public abstract play(message: Message, search: string): void;
+    public abstract play(message: Message | CommandInteraction, search: string): void;
 
     /**
      * Busca una lista de canciones para reproducir una de ellas.
      * @param message Un mensaje de Discord.
      * @param search Nombre de canciones a buscar.
      */
-    public abstract search(message: Message, search: string): void;
+    public abstract search(message: Message | CommandInteraction, search: string): void;
 
     /**
      * Inicia la radio.
      * @param message Un mensaje de Discord.
      * @param stream URL de la estación de radio a escuchar.
      */
-    public abstract radio(message: Message, stream?: string): void;
+    public abstract radio(message: Message | CommandInteraction, stream?: string): void;
 
     /**
      * Coloca pausa a la reproducción actual del bot.
      * @param message Un mensaje de Discord.
      */
-    public abstract pause(message: Message): void;
+    public abstract pause(message: Message | CommandInteraction): void;
 
     /**
      * Reanuda la reproducción previamente pausada.
      * @param message Un mensaje de Discord.
      */
-    public abstract resume(message: Message): void;
+    public abstract resume(message: Message | CommandInteraction): void;
 
     /**
      * Salta la canción en reproducción por la que sigue en la lista.
      * @param message Un mensaje de Discord.
      */
-    public abstract skip(message: Message): void;
+    public abstract skip(message: Message | CommandInteraction): void;
 
     /**
      * Saca al bot del canal de voz actual.
      * @param message Un mensaje de Discord.
      */
-    public abstract leave(message: Message): void;
+    public abstract leave(message: Message | CommandInteraction): void;
 
     /**
      * Ve lo que se está reproduciendo actualmente
      * @param message Un mensaje de Discord.
      */
-    public abstract np(message: Message): void;
+    public abstract np(message: Message | CommandInteraction): void;
 
     /**
      * Establece el modo de repetición de la lista de canciones o canción actual.
@@ -179,27 +179,27 @@ export default abstract class Music {
      * * 2: Repetir todas las canciones.
      * * 0 | 3: Desactivar modo repetir.
      */
-    public abstract repeat(message: Message, song?: 0 | 1 | 2 | 3): Promise<void>;
+    public abstract repeat(message: Message | CommandInteraction, song?: 0 | 1 | 2 | 3): Promise<void>;
 
     /**
      * Ve la cola de reproducción actual.
      * @param message Un mensaje de Discord.
      * @param song Número de la canción en cola.
      */
-    public abstract queue(message: Message, song?: number): void;
+    public abstract queue(message: Message | CommandInteraction, song?: number): void;
 
     /**
      * Quita una canción de la cola de producción.
      * @param message Un mensaje de Discord.
      * @param song Número de la posisión de la canción a quitar
      */
-    public abstract remove(message: Message, song: number): void;
+    public abstract remove(message: Message | CommandInteraction, song: number): void;
 
     /**
      * Limpia la cola actual de reproducción.
      * @param message Un mensaje de Discord.
      */
-    public abstract clear(message: Message): void;
+    public abstract clear(message: Message | CommandInteraction): void;
 
     /**
      * Obtén la colección de subscriciones de cada servidor, asignados por su ID.
@@ -254,83 +254,86 @@ export default abstract class Music {
         return pattern.test(url);
     }
 
-    protected getSong(message: Message): Song {
+    protected getSong(message: Message | CommandInteraction): Song | null {
         const subscription = this._subscriptions.get(message.guild.id);
 
         if (subscription?.audioPlayer && subscription.audioPlayer.state.status !== AudioPlayerStatus.Idle)
             return (subscription.audioPlayer.state.resource as AudioResource<Song>).metadata;
+        else return null;
     }
 
     /**
      * Conecta al bot en un canal de voz.
      * @param message Un mensaje de Discord
      */
-    protected connectBot(message: Message): Promise<MusicSubscription> {
+    protected connectBot(message: Message | CommandInteraction): Promise<MusicSubscription> {
         let subscription = this._subscriptions.get(message.guild.id);
 
         return new Promise((resolve: (value: MusicSubscription) => void, reject) => {
-            if (!subscription) {
-                const connection = joinVoiceChannel({
-                    channelId: message.member.voice.channel.id,
-                    guildId: message.guild.id,
-                    adapterCreator: message.guild.voiceAdapterCreator,
-                    selfDeaf: true
-                });
-
-                subscription = new MusicSubscription(connection, {
-                    onStart: (song: Song) => {
-                        if (this._new_song_message) this.sendMessage(message, song);
-                    },
-                    onAddQueue: (song: Song) => {
-                        this.sendMessageAddQueue(message, song);
-                    },
-                    onFinish: (sub: MusicSubscription) => {
-                        if (sub.queue.length == 0) {
-                            message.channel.send(this.notaMsg('note', 'Reproducción Terminada~'));
-                            sub.stop();
-                            sub.voiceConnection.disconnect();
-                        }
-                    },
-                    onDestroy: () => {
-                        this._subscriptions.delete(message.guild.id);
-                    },
-                    onError: (err) => {
-                        throw `Error interno inesperado: ${err}`;
-                    }
-                });
-
-                subscription.voiceConnection.on('error', console.warn);
-
-                entersState(connection, VoiceConnectionStatus.Ready, 20_000)
-                    .then(() => {
-                        this._subscriptions.set(message.guild.id, subscription);
-                        resolve(subscription);
-                    })
-                    .catch(() => {
-                        connection.destroy();
-                        message.reply(this.notaMsg('fail', 'No pude unirme al canal de voz. Vuelva a intentarlo más tarde.'));
-                        reject();
+            if ((message.member as GuildMember).voice)
+                if (!subscription) {
+                    const connection = joinVoiceChannel({
+                        channelId: (message.member as GuildMember).voice.channel.id,
+                        guildId: message.guild.id,
+                        adapterCreator: message.guild.voiceAdapterCreator,
+                        selfDeaf: true
                     });
-            } else if (!message.member.voice.channel.joinable) {
-                message.reply(this.notaMsg('fail', 'No tengo permiso para unirme a tu canal de voz'));
-                reject();
-            } else if (message.member.voice.channel.full) {
-                message.reply(this.notaMsg('fail', 'El canal ya está lleno'));
-                reject();
-            } else resolve(subscription);
+
+                    subscription = new MusicSubscription(connection, {
+                        onStart: (song: Song) => {
+                            if (this._new_song_message) this.sendMessage(message, song);
+                        },
+                        onAddQueue: (song: Song) => {
+                            this.sendMessageAddQueue(message, song);
+                        },
+                        onFinish: (sub: MusicSubscription) => {
+                            if (sub.queue.length == 0) {
+                                this.sendReply(message, this.notaMsg('note', 'Reproducción Terminada~'));
+                                sub.stop();
+                                sub.voiceConnection.disconnect();
+                            }
+                        },
+                        onDestroy: () => {
+                            this._subscriptions.delete(message.guild.id);
+                        },
+                        onError: (err) => {
+                            throw `Error interno inesperado: ${err}`;
+                        }
+                    });
+
+                    subscription.voiceConnection.on('error', console.warn);
+
+                    entersState(connection, VoiceConnectionStatus.Ready, 20_000)
+                        .then(() => {
+                            this._subscriptions.set(message.guild.id, subscription);
+                            resolve(subscription);
+                        })
+                        .catch((err) => {
+                            connection.destroy();
+                            this.sendReply(message, this.notaMsg('fail', 'No pude unirme al canal de voz. Vuelva a intentarlo más tarde.'));
+                            reject('No pude unirme al canal de voz. Vuelva a intentarlo más tarde:' + err);
+                        });
+                } else if (!(message.member as GuildMember).voice.channel.joinable) {
+                    this.sendReply(message, this.notaMsg('fail', 'No tengo permiso para unirme a tu canal de voz'));
+                    reject('No tengo permiso para unirme a tu canal de voz');
+                } else if ((message.member as GuildMember).voice.channel.full) {
+                    this.sendReply(message, this.notaMsg('fail', 'El canal ya está lleno'));
+                    reject('El canal ya está lleno');
+                } else resolve(subscription);
+            else reject('No es una instancia de GuildMember');
         });
     }
 
     /**
      * Crea una canción con su información para añadirla a la cola.
      */
-    protected async createSong(message: Message, url: string): Promise<Song> {
+    protected async createSong(message: Message | CommandInteraction, url: string): Promise<Song> {
         try {
             const info = await this._youtube.getVideo(url);
 
             const cancion: SongData = {
                 id: info.id,
-                autorID: message.author.id,
+                autorID: message.member.user.id,
                 title: info.title,
                 url: info.url,
                 channelID: info.channel.id,
@@ -344,7 +347,7 @@ export default abstract class Music {
 
             return new Song(cancion);
         } catch (_) {
-            message.reply(this.notaMsg('fail', 'No se econtró ningún video.'));
+            this.sendReply(message, this.notaMsg('fail', 'No se econtró ningún video.'));
             return null;
         }
     }
@@ -352,7 +355,7 @@ export default abstract class Music {
     /**
      * Función principal que reproduce la canción.
      */
-    protected playSong(message: Message, song: Song): void {
+    protected playSong(message: Message | CommandInteraction, song: Song): void {
         this.connectBot(message)
             .then(async (musicConnection) => {
                 if (!this._new_song_message && musicConnection.queue.length == 0) this.sendMessage(message, song);
@@ -360,7 +363,7 @@ export default abstract class Music {
                 musicConnection.addedToQueue(song);
 
                 musicConnection.voiceConnection.on('error', (error: Error) => {
-                    if (message.channel) message.channel.send(this.notaMsg('fail', 'Algo salió mal con la conexión. Volviendo a intentar...'));
+                    if (message.channel) this.sendReply(message, this.notaMsg('fail', 'Algo salió mal con la conexión. Volviendo a intentar...'));
                     this.playSong(message, song);
                     throw `Error interno inesperado: ${error.stack}`;
                 });
@@ -375,7 +378,7 @@ export default abstract class Music {
      * @param message Un mensaje de Discord.
      * @param video Vídeo a mostrar.
      */
-    protected async sendMessage(message: Message, video: Song): Promise<void> {
+    protected async sendMessage(message: Message | CommandInteraction, video: Song): Promise<void> {
         if (!message.guild) return undefined;
         const subscription = this._subscriptions.get(message.guild.id);
         let resMem = message.client.users.cache.get(`${BigInt(video.autorID)}`);
@@ -397,12 +400,13 @@ export default abstract class Music {
             if (this._show_name)
                 embed.setFooter(`Por StarMusic | Solicitado por: ${resMem?.tag || `Usuario desconocido (${video.autorID})`}`, 'https://i.imgur.com/WKD5uUL.png');
 
-            message.channel.send({ embeds: [embed] });
+            this.sendReply(message, { embeds: [embed] });
         } else {
             let solicitado = '';
             if (this._show_name) solicitado = `| Solicitado por: \`${resMem?.tag || `Usuario desconocido (${video.autorID})`}\``;
 
-            message.channel.send(
+            this.sendReply(
+                message,
                 `🔊Escuchando ahora: **${video.title}** [Video](${video.url})\n⏭En cola: \`${subscription.queue.findIndex((sg) => sg.id == video.id) + 1}/${
                     subscription.queue.length
                 }\`\n👥Vistas: \`${video.views ? ConvertString(video.views) : 'S/D'}\`\nPor StarMusic ${solicitado}`
@@ -416,7 +420,7 @@ export default abstract class Music {
      * @param message Un mensaje de Discord.
      * @param res Canción en reproducción.
      */
-    protected async progressBar(message: Message, res: Song): Promise<void> {
+    protected async progressBar(message: Message | CommandInteraction, res: Song): Promise<void> {
         if (!message.guild) return undefined;
         const voiceConnection = this._subscriptions.get(message.guild.id);
         if (!voiceConnection) return;
@@ -493,7 +497,7 @@ export default abstract class Music {
         }); */
     }
 
-    protected async sendMessageAddQueue(message: Message, video: Song): Promise<void> {
+    protected async sendMessageAddQueue(message: Message | CommandInteraction, video: Song): Promise<void> {
         const subscription = this._subscriptions.get(message.guild.id);
         let resMem = message.client.users.cache.get(`${BigInt(video.autorID)}`);
         if (!resMem) resMem = await message.client.users.fetch(`${BigInt(video.autorID)}`).catch(() => null);
@@ -511,17 +515,42 @@ export default abstract class Music {
                 .setFooter('Por StarMusic', 'https://i.imgur.com/WKD5uUL.png');
             if (this._show_name) embed.setFooter(`Solicitado por: ${resMem?.username || `Usuario desconocido (${video.autorID})`}`, 'https://i.imgur.com/WKD5uUL.png');
 
-            message.channel.send({ embeds: [embed] });
+            this.sendReply(message, { embeds: [embed] });
         } else {
             let solicitado = '';
             if (this._show_name) solicitado = `| Solicitado por: \`${resMem?.tag || `Usuario desconocido (${video.autorID})`}\``;
 
-            message.channel.send(
+            this.sendReply(
+                message,
                 `⏭️Agregado a cola: **${video.title}** [Video](${video.url})\n⏲️Duración: \`${video.duration ? ConvertTime(video.duration) : 'S/D'}\`\nEn cola: \`${
                     subscription.queue.length
                 }\`\nPor StarMusic ${solicitado}`
             );
         }
+    }
+
+    /**
+     * Procesa el envío de un mensaje para un comando normal o para una interacción.
+     *
+     * @param message Una instancia de mensaje o CommandInteraction
+     * @param options Mensaje a enviar
+     * @returns EL objeto message enviado.
+     */
+    protected async sendReply(
+        message: Message | CommandInteraction,
+        options:
+            | string
+            | (MessageOptions & {
+                  split?: false;
+                  ephemeral?: boolean;
+              })
+    ): Promise<Message | APIMessage> {
+        if ((message as CommandInteraction).commandID) {
+            if (typeof options == 'string') options = { content: options };
+            options.ephemeral = true;
+            const mensaje = (await (message as CommandInteraction).followUp(options)) as Message;
+            return mensaje;
+        } else return await message.channel.send(options);
     }
 
     /**

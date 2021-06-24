@@ -5,7 +5,7 @@
 [![Versión de NPM](https://img.shields.io/npm/v/starmusic?maxAge=3600)](https://www.npmjs.com/package/starmusic)
 [![Descargas de NPM](https://img.shields.io/npm/dt/starmusic?maxAge=3600)](https://www.npmjs.com/package/starmusic) [![Estado ESLint](https://github.com/StarArmyDev/starmusic/workflows/ESLint/badge.svg)](https://github.com/StarArmyDev/starmusic/actions?query=workflow%3A%22ESLint%22) [![Vulnerabilidades Conocidas](https://snyk.io/test/github/StarArmyDev/starmusic/badge.svg)](https://snyk.io/test/github/StarArmyDev/starmusic?targetFile=package.json) [![DeepScan grade](https://deepscan.io/api/teams/12942/projects/16035/branches/333292/badge/grade.svg)](https://deepscan.io/dashboard/#view=project&tid=12942&pid=16035&bid=333292) [![time tracker](https://wakatime.com/badge/github/StarArmyDev/starmusic.svg)](https://wakatime.com/badge/github/StarArmyDev/starmusic) [![Chat de Discord](https://discordapp.com/api/guilds/491819854307917826/widget.png?style=shield)](https://discord.gg/VG6D4ss)
 
-[![npm installnfo](https://nodei.co/npm/starmusic.png?downloads=true&stars=true "npm installnfo")](https://nodei.co/npm/starmusic/)
+[![npm installnfo](https://nodei.co/npm/starmusic.png?downloads=true&stars=true 'npm installnfo')](https://nodei.co/npm/starmusic/)
 
 [![forthebadge](https://forthebadge.com/images/badges/made-with-typescript.svg)](https://forthebadge.com)
 
@@ -254,6 +254,7 @@ var music = new StarMusic({
 // Evento para ver cuando el bot ya prendió y está funcionando.
 client.on('ready', () => console.log('¡Encendido!'));
 
+// Escuchamos los mensajes con el evento "message".
 client.on('messages', (message) => {
     // No hacemos nada si el usuario es un bot o el mensaje no empieza con el prefijo.
     if (!message.content.startsWith(prefix) || message.author.bot) return;
@@ -301,9 +302,10 @@ for (const file of commandFiles) {
     client.commands.set(command.name, command);
 }
 
-// Nuestros eventos comunes...
+// Nuestro evento común de encendido
 client.on('ready', () => console.log('¡Encendido!'));
 
+// Escuchamos los mensajes con el evento "message".
 client.on('messages', (message) => {
     if (!message.content.startsWith(prefix) || message.author.bot) return;
 
@@ -326,12 +328,73 @@ module.exports = {
     name: 'play',
     description: 'Reproduce una canción',
     execute(client, message, args) {
+        // Ejecutamos la función play
         client.music.play(message, args.join(' '));
     }
 };
 ```
 
 Puedes ver una guía completa de como hacer manejo de comandos en [esta guía](https://discordjs.guide/command-handling/ 'Discord.js') _(En inglés)_
+
+### Usando en SlashCommands
+
+En nuestro archivo principal. Comunmente llamado `index.js`.
+
+```js
+// Declaramos la base
+const Discord = require('discord.js');
+const StarMusic = require('starmusic');
+const fs = require('fs');
+
+const prefix = '!';
+const client = new Discord.Client();
+client.commands = new Discord.Collection();
+
+// Aquí iniciamos el módulo y lo pasaremos por el cliente.
+client.music = new StarMusic({
+    youtubeKey: 'ApiKey',
+    djRoles: ['IDRol', 'IDRol2'],
+    embedColor: 'BLUE'
+});
+
+// Nuestros eventos comunes...
+client.on('ready', () => console.log('¡Encendido!'));
+
+/* Debes de crear los slashCommands previamente conforme a lo que requieras
+ * por ejemplo:
+ * {
+ *     name: "play",
+ *     description: "Reproduce una canción de Youtube por su nombre o su url.",
+ *     options: [
+ *         {
+ *             name: "song",
+ *             type: "STRING",
+ *             description: "Nombre de la canción o url a buscar.",
+ *             required: true
+ *         }
+ *     ]
+ * }
+ */
+
+// Escuchamos los comandos con el evento "interaction".
+client.on('interaction', (interaction) => {
+    // Si nuestra interacción no es un comando, retornamos sin hacer nada
+    if (!interaction.isCommand()) return;
+
+    // Si es comando se llama play
+    if (interaction.commandName === 'play') {
+        // Tomamos el valor de búsqueda llamada song
+        const url = interaction.options.get('song').value;
+        // Ejecutamos la función play
+        client.music.play(interaction, url);
+        // Si es comando se llama leave
+    } else if (interaction.commandName === 'leave') {
+        client.music.leave(interaction);
+    }
+});
+
+client.login('SecretToken');
+```
 
 ## Soporte
 

@@ -9,6 +9,11 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ## [v3.0.0] - 2021-00-00
 
+## Added
+
+- Soporte para ser usado en slash commands y pasar un `CommandInteraction` en vez de `Message` de las funciones.
+- Se exportan más propiedades que el StarMusic constructor por defecto para dar más libertad a los desarrolladores avanzados de crear más funcionalidades.
+
 ### Fixed
 
 - Con el cambio de dependencias y la re-codificación de la mayoría del código, se notará una mejora significativa en estabilidad y rendimiento.

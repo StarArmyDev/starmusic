@@ -42,7 +42,7 @@ export class Song implements SongData {
     }
 
     /**
-     * Creates an AudioResource from this Song.
+     * Crea un recurso de audio a partir de esta canción.
      */
     public createAudioResource(): Promise<AudioResource<Song>> {
         return new Promise((resolve, reject) => {
