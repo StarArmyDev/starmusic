@@ -55,30 +55,34 @@ export class MusicSubscription {
         this.onDestroy = onDestroy;
         this.onError = onError;
 
-        this.voiceConnection.on('stateChange', async (_, newState) => {
-            if (newState.status === VoiceConnectionStatus.Disconnected)
-                if (newState.reason === VoiceConnectionDisconnectReason.WebSocketClose && newState.closeCode === 4014)
-                    try {
-                        // Probablemente se movió el canal de voz
-                        await entersState(this.voiceConnection, VoiceConnectionStatus.Connecting, 5_000);
-                    } catch {
-                        // Probablemente eliminado del canal de voz
-                        this.voiceConnection.destroy();
-                    }
-                else if (this.voiceConnection.rejoinAttempts < 5) {
-                    /*
+        this.voiceConnection.on(VoiceConnectionStatus.Disconnected, async (_, newState) => {
+            if (newState.reason === VoiceConnectionDisconnectReason.WebSocketClose && newState.closeCode === 4014)
+                try {
+                    // Probablemente se movió el canal de voz
+                    await entersState(this.voiceConnection, VoiceConnectionStatus.Connecting, 5_000);
+                } catch {
+                    // Probablemente eliminado del canal de voz
+                    this.voiceConnection.destroy();
+                }
+            else if (this.voiceConnection.rejoinAttempts < 5) {
+                /*
 						La desconexión en este caso es recuperable, y también tenemos < 5 intentos repetidos por lo que nos volveremos a conectar.
 					*/
-                    await wait((this.voiceConnection.rejoinAttempts + 1) * 5_000);
-                    this.voiceConnection.rejoin();
-                    /*
+                await wait((this.voiceConnection.rejoinAttempts + 1) * 5_000);
+                this.voiceConnection.rejoin();
+                /*
 						La desconexión en este caso puede ser recuperable, pero no nos quedan más intentos: destruir.
 					*/
-                } else this.voiceConnection.destroy();
-            else if (newState.status === VoiceConnectionStatus.Destroyed) {
-                this.stop();
-                this.onDestroy();
-            } else if (!this.readyLock && (newState.status === VoiceConnectionStatus.Connecting || newState.status === VoiceConnectionStatus.Signalling)) {
+            } else this.voiceConnection.destroy();
+        });
+
+        this.voiceConnection.on(VoiceConnectionStatus.Destroyed, async () => {
+            this.stop();
+            this.onDestroy();
+        });
+
+        this.voiceConnection.on(VoiceConnectionStatus.Signalling || VoiceConnectionStatus.Connecting, async () => {
+            if (!this.readyLock) {
                 this.readyLock = true;
                 try {
                     await entersState(this.voiceConnection, VoiceConnectionStatus.Ready, 20_000);

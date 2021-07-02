@@ -1,5 +1,5 @@
 import { AudioPlayerStatus, AudioResource, VoiceConnectionStatus, entersState, joinVoiceChannel } from '@discordjs/voice';
-import { APIMessage, CommandInteraction, GuildMember, Message, MessageEmbed, MessageOptions, Snowflake } from 'discord.js';
+import { CommandInteraction, GuildMember, Message, MessageEmbed, MessageOptions, Snowflake } from 'discord.js';
 import { Colors, ColorsFlags, ConvertString, ConvertTime, resolveColor } from './libs';
 import { MusicSubscription } from './Suscription';
 import { Song, SongData } from './Song';
@@ -308,7 +308,7 @@ export default abstract class Music {
                             this._subscriptions.set(message.guild.id, subscription);
                             resolve(subscription);
                         })
-                        .catch((err) => {
+                        .catch((err: unknown) => {
                             connection.destroy();
                             this.sendReply(message, this.notaMsg('fail', 'No pude unirme al canal de voz. Vuelva a intentarlo más tarde.'));
                             reject('No pude unirme al canal de voz. Vuelva a intentarlo más tarde:' + err);
@@ -544,7 +544,7 @@ export default abstract class Music {
                   split?: false;
                   ephemeral?: boolean;
               })
-    ): Promise<Message | APIMessage> {
+    ): Promise<Message> {
         if ((message as CommandInteraction).commandID) {
             if (typeof options == 'string') options = { content: options };
             options.ephemeral = true;

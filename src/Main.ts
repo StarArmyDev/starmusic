@@ -6,7 +6,7 @@
 /*       Servidor de Soporte: https://discord.gg/DsYhNKd      */
 /*                                                            */
 /* ========================================================== */
-import { APIMessage, CommandInteraction, GuildMember, Message, MessageEmbed } from 'discord.js';
+import { CommandInteraction, GuildMember, Message, MessageEmbed } from 'discord.js';
 import { AudioPlayerStatus } from '@discordjs/voice';
 import { ConvertString, ConvertTime } from './libs';
 import { Video } from 'popyt';
@@ -47,7 +47,7 @@ export default class StarMusic extends Music {
                     if (playid.toString().includes('&t=')) playid = playid.split('&t=')[0];
 
                     ytpl(playid)
-                        .then(async (result): Promise<Message | APIMessage> => {
+                        .then(async (result): Promise<Message> => {
                             if (result.items.length <= 0)
                                 return this.sendReply(message, this.notaMsg('fail', 'No se pudo obtener ningún video de esa lista de reproducción.'));
                             if (result.items.length > this._max_tail)
@@ -86,8 +86,9 @@ export default class StarMusic extends Music {
                             } catch (err) {
                                 console.warn(err);
                             }
+                            return null;
                         })
-                        .catch((): Promise<Message | APIMessage> => this.sendReply(message, this.notaMsg('fail', 'Algo salió mal al buscar esa lista de reproducción')));
+                        .catch((): Promise<Message> => this.sendReply(message, this.notaMsg('fail', 'Algo salió mal al buscar esa lista de reproducción')));
                 } else {
                     if (searchstring.includes('https://youtu.be/') || (searchstring.includes('https://www.youtube.com/') && searchstring.includes('&')))
                         searchstring = searchstring.split('&')[0];
@@ -99,9 +100,9 @@ export default class StarMusic extends Music {
                             if (lastSong?.id == song.id || subscription?.queue.find((c) => c.id == song.id))
                                 return this.sendReply(message, this.notaMsg('fail', 'Esta canción ya está en la cola.'));
 
-                            this.playSong(message, song);
+                            return this.playSong(message, song);
                         })
-                        .catch((): Promise<Message | APIMessage> => this.sendReply(message, this.notaMsg('fail', 'No se econtró ningún video.')));
+                        .catch((): Promise<Message> => this.sendReply(message, this.notaMsg('fail', 'No se econtró ningún video.')));
                 }
             }
         }
@@ -147,18 +148,16 @@ export default class StarMusic extends Music {
                                     await Promise.all(promesas);
                                     const process = (firstMsg: Message): void => {
                                         message.channel
-                                            .awaitMessages(
-                                                (m: Message) =>
+                                            .awaitMessages({
+                                                filter: (m: Message) =>
                                                     m.author.id == message.member.user.id &&
                                                     ((parseInt(m.content) > 0 &&
                                                         parseInt(m.content) <= (searchResult.results.length > 10 ? 10 : searchResult.results.length)) ||
                                                         ['cancel', 'cancelar'].includes(m.content.trim().toLowerCase())),
-                                                {
-                                                    max: 1,
-                                                    time: 60000,
-                                                    errors: ['time']
-                                                }
-                                            )
+                                                max: 1,
+                                                time: 60000,
+                                                errors: ['time']
+                                            })
                                             .then(async (collected) => {
                                                 const collectedArray = collected.first()!;
                                                 const mcon = collectedArray.content.trim().toLowerCase();
@@ -516,31 +515,33 @@ export default class StarMusic extends Music {
                     await m.react('⏪');
                     await m.react('⏩');
 
-                    m.createReactionCollector((reaction, user) => reaction.emoji.name === '⏩' && user.id === message.member.user.id, {
-                        time: 120000
-                    }).on('collect', () => {
-                        if (page === pages.length) return;
-                        page++;
-                        embed.setDescription(pages[page - 1]);
-                        embed.setFooter(
-                            `Página ${page} de ${pages.length}`,
-                            (message as Message).author ? (message as Message).author.displayAvatarURL() : (message as CommandInteraction).user.displayAvatarURL()
-                        );
-                        m.edit({ embeds: [embed] });
-                    });
+                    m.createReactionCollector({ filter: (reaction, user) => reaction.emoji.name === '⏩' && user.id === message.member.user.id, time: 120000 }).on(
+                        'collect',
+                        () => {
+                            if (page === pages.length) return;
+                            page++;
+                            embed.setDescription(pages[page - 1]);
+                            embed.setFooter(
+                                `Página ${page} de ${pages.length}`,
+                                (message as Message).author ? (message as Message).author.displayAvatarURL() : (message as CommandInteraction).user.displayAvatarURL()
+                            );
+                            m.edit({ embeds: [embed] });
+                        }
+                    );
 
-                    m.createReactionCollector((reaction, user) => reaction.emoji.name === '⏪' && user.id === message.member.user.id, {
-                        time: 120000
-                    }).on('collect', () => {
-                        if (page === 1) return;
-                        page--;
-                        embed.setDescription(pages[page - 1]);
-                        embed.setFooter(
-                            `Página ${page} de ${pages.length}`,
-                            (message as Message).author ? (message as Message).author.displayAvatarURL() : (message as CommandInteraction).user.displayAvatarURL()
-                        );
-                        m.edit({ embeds: [embed] });
-                    });
+                    m.createReactionCollector({ filter: (reaction, user) => reaction.emoji.name === '⏪' && user.id === message.member.user.id, time: 120000 }).on(
+                        'collect',
+                        () => {
+                            if (page === 1) return;
+                            page--;
+                            embed.setDescription(pages[page - 1]);
+                            embed.setFooter(
+                                `Página ${page} de ${pages.length}`,
+                                (message as Message).author ? (message as Message).author.displayAvatarURL() : (message as CommandInteraction).user.displayAvatarURL()
+                            );
+                            m.edit({ embeds: [embed] });
+                        }
+                    );
                 };
             } else {
                 embed
@@ -582,7 +583,8 @@ export default class StarMusic extends Music {
         if (!message.guild || !member?.voice) return undefined;
 
         const subscription = this._subscriptions.get(message.guild.id);
-        if (!subscription) message.reply(this.notaMsg('fail', 'No se ha encontrado ninguna cola para este servidor..'));
+        if (!subscription) message.reply(this.notaMsg('fail', 'No se ha encontrado ninguna cola para este servidor.'));
+        else if (subscription.queue.length == 0) message.reply(this.notaMsg('fail', 'La cola esta vacía.'));
         // else if (subscription.isRadio) message.reply(this.notaMsg('fail', 'No se puede usar en modo radio.'));
         else if (this._just_dj && !this.isDj(member) && !this.isAdmin(member))
             message.reply(this.notaMsg('fail', 'Sólo los administradores o personas con rol de DJ pueden borrar la cola de reproducción.'));
