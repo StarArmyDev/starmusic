@@ -219,7 +219,7 @@ export default abstract class Music {
     protected async isAdmin(member: GuildMember): Promise<boolean> {
         await member.fetch();
 
-        if (member.id == member.guild.ownerID) return true;
+        if (member.id == member.guild.ownerId) return true;
         else if (member.roles.cache.find((r) => this._admin_roles.includes(r.id))) return true;
         else return member.permissions.has('ADMINISTRATOR');
     }
@@ -384,7 +384,7 @@ export default abstract class Music {
         let resMem = message.client.users.cache.get(`${BigInt(video.autorID)}`);
         if (!resMem) resMem = await message.client.users.fetch(`${BigInt(video.autorID)}`).catch(() => null);
 
-        if (message.channel.type != 'dm' && message.channel.permissionsFor(message.guild.me!)!.has('EMBED_LINKS')) {
+        if (message.channel.type != 'DM' && message.channel.permissionsFor(message.guild.me!)!.has('EMBED_LINKS')) {
             const embed = new MessageEmbed()
                 .setColor(this._embed_color)
                 .setAuthor('🔊Escuchando a:')
@@ -426,7 +426,7 @@ export default abstract class Music {
         if (!voiceConnection) return;
         // const dispatcher = voiceConnection.dispatcher;
 
-        if (message.channel.type != 'dm' && message.channel.permissionsFor(message.guild.me!)!.has('EMBED_LINKS')) {
+        if (message.channel.type != 'DM' && message.channel.permissionsFor(message.guild.me!)!.has('EMBED_LINKS')) {
             const embed = new MessageEmbed()
                 .setColor(this._embed_color)
                 .addField(`Reproducción Actual: 00:00 :⏲: ${res.duration ? ConvertTime(res.duration) : '00:00'}`, this._emoji + '────────────────────────────── [0%]');
@@ -502,7 +502,7 @@ export default abstract class Music {
         let resMem = message.client.users.cache.get(`${BigInt(video.autorID)}`);
         if (!resMem) resMem = await message.client.users.fetch(`${BigInt(video.autorID)}`).catch(() => null);
 
-        if (message.channel.type != 'dm' && message.channel.permissionsFor(message.guild.me!)!.has('EMBED_LINKS')) {
+        if (message.channel.type != 'DM' && message.channel.permissionsFor(message.guild.me!)!.has('EMBED_LINKS')) {
             const embed = new MessageEmbed()
                 .setColor(this._embed_color)
                 .setAuthor('⏭️Agregado a Cola:')
@@ -545,7 +545,7 @@ export default abstract class Music {
                   ephemeral?: boolean;
               })
     ): Promise<Message> {
-        if ((message as CommandInteraction).commandID) {
+        if ((message as CommandInteraction).commandId) {
             if (typeof options == 'string') options = { content: options };
             options.ephemeral = true;
             const mensaje = (await (message as CommandInteraction).followUp(options)) as Message;

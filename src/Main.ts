@@ -22,7 +22,7 @@ import ytpl from 'ytpl';
  */
 export default class StarMusic extends Music {
     async play(message: Message | CommandInteraction, search: string): Promise<void> {
-        if ((message as CommandInteraction).commandID) await (message as CommandInteraction).defer({ ephemeral: true });
+        if ((message as CommandInteraction).commandId) await (message as CommandInteraction).defer({ ephemeral: true });
 
         const member = message.member as GuildMember;
         if (!message.guild || !member) this.sendReply(message, this.notaMsg('fail', 'No estas en un servidor.'));
@@ -199,7 +199,7 @@ export default class StarMusic extends Music {
                                             });
                                     };
 
-                                    if (message.channel.type == 'dm' || message.channel.permissionsFor(message.guild.me).has('EMBED_LINKS')) {
+                                    if (message.channel.type == 'DM' || message.channel.permissionsFor(message.guild.me).has('EMBED_LINKS')) {
                                         const embed = new MessageEmbed().setColor(this._embed_color).setTitle('= Elige tu video =');
 
                                         videos.map((video_3, index) => embed.addField(`${index + 1}`, `[${this.notaMsg('font', video_3.title)}](${video_3.url})`));
@@ -313,7 +313,7 @@ export default class StarMusic extends Music {
     }
 
     async pause(message: Message | CommandInteraction): Promise<void> {
-        if ((message as CommandInteraction).commandID) await (message as CommandInteraction).defer({ ephemeral: true });
+        if ((message as CommandInteraction).commandId) await (message as CommandInteraction).defer({ ephemeral: true });
 
         const member = message.member as GuildMember;
         if (!message.guild || !member?.voice) return;
@@ -333,7 +333,7 @@ export default class StarMusic extends Music {
     }
 
     async resume(message: Message | CommandInteraction): Promise<void> {
-        if ((message as CommandInteraction).commandID) await (message as CommandInteraction).defer({ ephemeral: true });
+        if ((message as CommandInteraction).commandId) await (message as CommandInteraction).defer({ ephemeral: true });
 
         const member = message.member as GuildMember;
         if (!message.guild || !member?.voice) return undefined;
@@ -352,7 +352,7 @@ export default class StarMusic extends Music {
     }
 
     async skip(message: Message | CommandInteraction): Promise<void> {
-        if ((message as CommandInteraction).commandID) await (message as CommandInteraction).defer({ ephemeral: true });
+        if ((message as CommandInteraction).commandId) await (message as CommandInteraction).defer({ ephemeral: true });
 
         const member = message.member as GuildMember;
         if (!message.guild || !member?.voice) return undefined;
@@ -400,7 +400,7 @@ export default class StarMusic extends Music {
         // else if (subscription.isRadio) message.reply(this.notaMsg('fail', 'No se puede usar en modo radio.'));
         else {
             const resMem = message.client.users.cache.get(`${BigInt(song.autorID)}`);
-            if (message.channel.type != 'dm' && message.channel.permissionsFor(message.guild!.me!)!.has('EMBED_LINKS')) {
+            if (message.channel.type != 'DM' && message.channel.permissionsFor(message.guild!.me!)!.has('EMBED_LINKS')) {
                 const embed = new MessageEmbed()
                     .setAuthor('🔊Escuchando:')
                     .setColor(this._embed_color)
@@ -440,7 +440,7 @@ export default class StarMusic extends Music {
     }
 
     async repeat(message: Message | CommandInteraction, song?: 0 | 1 | 2 | 3): Promise<void> {
-        if ((message as CommandInteraction).commandID) await (message as CommandInteraction).defer({ ephemeral: true });
+        if ((message as CommandInteraction).commandId) await (message as CommandInteraction).defer({ ephemeral: true });
 
         if (!message.guild || !message.member) return undefined;
 
@@ -507,7 +507,7 @@ export default class StarMusic extends Music {
                     .setAuthor('Canciones en cola', message.client.user?.displayAvatarURL())
                     .setFooter(`Página ${page} de ${pages.length}`)
                     .setDescription(pages[page - 1]);
-                if ((message as CommandInteraction).commandID)
+                if ((message as CommandInteraction).commandId)
                     message.reply({ embeds: [embed], ephemeral: true }).then(async () => response((await (message as CommandInteraction).fetchReply()) as Message));
                 else message.channel.send({ embeds: [embed] }).then((m) => response(m));
 

@@ -2,7 +2,7 @@
     "name": "starmusic",
     "version": "3.0.0-dev",
     "description": "Reproduce tu música fácilmente, en español y sin complicaciones.",
-    "main": "./lib/main",
+    "main": "./lib/Main",
     "types": "./src/index.d.ts",
     "scripts": {
         "docs": "typedoc",
@@ -40,8 +40,8 @@
     ],
     "dependencies": {
         "@discordjs/opus": "^0.5.3",
-        "@discordjs/voice": "^0.5.1",
-        "discord.js": "^13.0.0-dev.fe6cc0c.1625227356",
+        "@discordjs/voice": "^0.5.5",
+        "discord.js": "^13.0.0-dev.5e433b5.1627473836",
         "ffmpeg-static": "^4.4.0",
         "popyt": "^5.0.0",
         "tweetnacl": "^1.0.3",
@@ -49,21 +49,21 @@
         "ytpl": "^2.2.1"
     },
     "devDependencies": {
-        "@types/chai": "^4.2.19",
-        "@types/mocha": "^8.2.2",
-        "@types/node": "^15.12.4",
-        "@types/ws": "^7.4.5",
-        "@typescript-eslint/eslint-plugin": "^4.28.0",
-        "@typescript-eslint/parser": "^4.28.0",
+        "@types/chai": "^4.2.21",
+        "@types/mocha": "^9.0.0",
+        "@types/node": "^16.4.5",
+        "@types/ws": "^7.4.7",
+        "@typescript-eslint/eslint-plugin": "^4.28.5",
+        "@typescript-eslint/parser": "^4.28.5",
         "chai": "^4.3.4",
-        "eslint": "^7.29.0",
+        "eslint": "^7.31.0",
         "eslint-config-prettier": "^8.3.0",
         "eslint-plugin-prettier": "^3.4.0",
         "gh-pages": "^3.2.3",
-        "mocha": "^9.0.1",
-        "prettier": "^2.3.1",
-        "ts-node": "^10.0.0",
-        "typedoc": "^0.21.0",
-        "typescript": "^4.3.4"
+        "mocha": "^9.0.3",
+        "prettier": "^2.3.2",
+        "ts-node": "^10.1.0",
+        "typedoc": "^0.21.4",
+        "typescript": "^4.3.5"
     }
 }
