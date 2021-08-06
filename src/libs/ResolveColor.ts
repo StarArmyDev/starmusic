@@ -10,7 +10,7 @@ export const resolveColor = (color: Colors | Colors[]): number => {
     } else color = (color[0] << 16) + (color[1] << 8) + color[2];
 
     if (color < 0 || color > 0xffffff) throw new RangeError('COLOR_RANGE');
-    else if (color && isNaN(Number(color))) throw new TypeError('COLOR_CONVERT');
+    else if (color && Number.isNaN(color)) throw new TypeError('COLOR_CONVERT');
 
     return Number(color);
 };

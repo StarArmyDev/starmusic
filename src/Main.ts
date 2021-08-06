@@ -22,7 +22,7 @@ import ytpl from 'ytpl';
  */
 export default class StarMusic extends Music {
     async play(message: Message | CommandInteraction, search: string): Promise<void> {
-        if ((message as CommandInteraction).commandId) await (message as CommandInteraction).defer({ ephemeral: true });
+        if (!(message instanceof Message)) await message.deferReply({ ephemeral: true });
 
         const member = message.member as GuildMember;
         if (!message.guild || !member) this.sendReply(message, this.notaMsg('fail', 'No estas en un servidor.'));
@@ -81,8 +81,8 @@ export default class StarMusic extends Music {
 
                                 if (ran >= result.items.length)
                                     if (index == 0) this.sendReply(message, this.notaMsg('fail', 'No pude obtener ninguna canción de esa lista de reproducción'));
-                                    else if (index == 1) message.channel.send(this.notaMsg('note', '⏭️En cola una canción.'));
-                                    else if (index > 1) message.channel.send(this.notaMsg('note', `️⏭️️En cola ${index} canciones.`));
+                                    else if (index == 1) this.sendReply(message, this.notaMsg('note', '⏭️En cola una canción.'));
+                                    else if (index > 1) this.sendReply(message, this.notaMsg('note', `️⏭️️En cola ${index} canciones.`));
                             } catch (err) {
                                 console.warn(err);
                             }
@@ -211,8 +211,8 @@ export default class StarMusic extends Music {
                                                     : (message as CommandInteraction).user.displayAvatarURL()
                                             );
 
-                                        if (response) message.channel.send({ embeds: [embed] }).then((m) => process(m));
-                                        else (message as CommandInteraction).followUp({ embeds: [embed] }).then(async (m) => process(m as Message));
+                                        if (response) process(await message.channel.send({ embeds: [embed] }));
+                                        else process((await (message as CommandInteraction).followUp({ embeds: [embed] })) as Message);
                                     } else {
                                         const vids = videos
                                             .map(
@@ -227,8 +227,8 @@ export default class StarMusic extends Music {
                                             )
                                             .join('\n\n');
                                         const mensaje = `\`\`\`yml\n= Elige tu video =\n\`\`\`${vids}\n\n= Ponga \`cancelar\` o \`cancel\` para cancelar la búsqueda.`;
-                                        if (response) message.channel.send(mensaje).then((m) => process(m));
-                                        else (message as CommandInteraction).followUp(mensaje).then((m) => process(m as Message));
+                                        if (response) process(await message.channel.send({ content: mensaje }));
+                                        else process((await (message as CommandInteraction).followUp(mensaje)) as Message);
                                     }
                                 } catch (err) {
                                     return console.warn(err);
@@ -280,7 +280,7 @@ export default class StarMusic extends Music {
                                 volume: servidores!.volume / 100
                             });
 
-                            message.channel.send({
+                            message.reply({
                                 embeds: [
                                     new MessageEmbed().setColor('RANDOM').setDescription(`:radio: Radio ${message.client.user?.username || 'StarMusic'} Activado~
                         \n🎶◉Escuchando: [.::\`${stream}\`::.]
@@ -297,7 +297,7 @@ export default class StarMusic extends Music {
                         volume: servidores!.volume / 100
                     });
 
-                    message.channel.send({
+                    message.reply({
                         embeds: [
                             new MessageEmbed().setColor('RANDOM').setDescription(`:radio: Radio ${message.client.user?.username || 'StarMusic'} Activado~
                 \n🎶◉Escuchando: [.::\`${this._radio_station}\`::.]
@@ -313,7 +313,7 @@ export default class StarMusic extends Music {
     }
 
     async pause(message: Message | CommandInteraction): Promise<void> {
-        if ((message as CommandInteraction).commandId) await (message as CommandInteraction).defer({ ephemeral: true });
+        if (!(message instanceof Message)) await message.deferReply({ ephemeral: true });
 
         const member = message.member as GuildMember;
         if (!message.guild || !member?.voice) return;
@@ -333,7 +333,7 @@ export default class StarMusic extends Music {
     }
 
     async resume(message: Message | CommandInteraction): Promise<void> {
-        if ((message as CommandInteraction).commandId) await (message as CommandInteraction).defer({ ephemeral: true });
+        if (!(message instanceof Message)) await message.deferReply({ ephemeral: true });
 
         const member = message.member as GuildMember;
         if (!message.guild || !member?.voice) return undefined;
@@ -352,7 +352,7 @@ export default class StarMusic extends Music {
     }
 
     async skip(message: Message | CommandInteraction): Promise<void> {
-        if ((message as CommandInteraction).commandId) await (message as CommandInteraction).defer({ ephemeral: true });
+        if (!(message instanceof Message)) await message.deferReply({ ephemeral: true });
 
         const member = message.member as GuildMember;
         if (!message.guild || !member?.voice) return undefined;
@@ -421,7 +421,7 @@ export default class StarMusic extends Music {
                     );
                 if (this._show_name)
                     embed.setFooter(`Por StarMusic | Solicitado por: ${resMem?.username || `Usuario desconocido (${song.autorID})`}`, 'https://i.imgur.com/WKD5uUL.png');
-                message.reply({ embeds: [embed] });
+                message.reply({ allowedMentions: { repliedUser: false }, embeds: [embed] });
             } else {
                 let solicitado = '';
                 if (this._show_name) solicitado = `| Solicitado por: ${resMem?.tag || `<@${song.autorID}>`}`;
@@ -440,7 +440,7 @@ export default class StarMusic extends Music {
     }
 
     async repeat(message: Message | CommandInteraction, song?: 0 | 1 | 2 | 3): Promise<void> {
-        if ((message as CommandInteraction).commandId) await (message as CommandInteraction).defer({ ephemeral: true });
+        if (!(message instanceof Message)) await message.deferReply({ ephemeral: true });
 
         if (!message.guild || !message.member) return undefined;
 
@@ -492,7 +492,7 @@ export default class StarMusic extends Music {
                         .setThumbnail(`https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`);
                     if (this._show_name) embed.setFooter(`Solicitado por: ${resMem?.username || `Usuario Desconocido (${video.autorID})`}`, resMem?.displayAvatarURL());
 
-                    message.reply({ embeds: [embed] });
+                    message.reply({ allowedMentions: { repliedUser: false }, embeds: [embed] });
                 }
             } else if (subscription.queue.length > 11) {
                 const pages: string[] = [];
@@ -502,14 +502,6 @@ export default class StarMusic extends Music {
                     const i = s.map((video, songI) => `**${pageI}${songI + 1}:** __${video.title}__`).join('\n\n');
                     if (i !== undefined) pages.push(i);
                 });
-
-                embed
-                    .setAuthor('Canciones en cola', message.client.user?.displayAvatarURL())
-                    .setFooter(`Página ${page} de ${pages.length}`)
-                    .setDescription(pages[page - 1]);
-                if ((message as CommandInteraction).commandId)
-                    message.reply({ embeds: [embed], ephemeral: true }).then(async () => response((await (message as CommandInteraction).fetchReply()) as Message));
-                else message.channel.send({ embeds: [embed] }).then((m) => response(m));
 
                 const response = async (m: Message): Promise<void> => {
                     await m.react('⏪');
@@ -543,6 +535,17 @@ export default class StarMusic extends Music {
                         }
                     );
                 };
+
+                embed
+                    .setAuthor('Canciones en cola', message.client.user?.displayAvatarURL())
+                    .setFooter(`Página ${page} de ${pages.length}`)
+                    .setDescription(pages[page - 1]);
+                if (!(message instanceof Message))
+                    message
+                        .reply({ embeds: [embed], ephemeral: true })
+                        .then(async () => response((await (message as CommandInteraction).fetchReply()) as Message))
+                        .catch(() => undefined);
+                else response(await message.channel.send({ embeds: [embed] }));
             } else {
                 embed
                     .setAuthor('Canciones en cola', message.client.user?.displayAvatarURL())
@@ -552,7 +555,7 @@ export default class StarMusic extends Music {
                         (message as Message).author ? (message as Message).author.displayAvatarURL() : (message as CommandInteraction).user.displayAvatarURL()
                     );
 
-                message.reply({ embeds: [embed] });
+                message.reply({ allowedMentions: { repliedUser: false }, embeds: [embed] });
             }
         }
     }
@@ -565,7 +568,6 @@ export default class StarMusic extends Music {
         if (!subscription) message.reply(this.notaMsg('fail', 'No se ha encontrado ninguna cola para este servidor.'));
         // else if (subscription.isRadio) message.reply(this.notaMsg('fail', 'No se puede usar en modo radio.'));
         else if (!song) message.reply(this.notaMsg('fail', 'No colocaste la posición del video.'));
-        else if (song - 1 == 0) message.reply(this.notaMsg('fail', 'No puedes borrar la música que se está reproduciendo actualmente.'));
         else {
             const cancion = subscription.queue.find((_, i) => i == song - 1);
             if (!cancion) message.reply(this.notaMsg('fail', 'No se pudo encontrar ese video o algo salió mal.'));

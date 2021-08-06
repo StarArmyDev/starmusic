@@ -1,4 +1,11 @@
-docs
+# Build
+dist/
+
+# Documentation
+docs/
+
+# Snyk Analysis
+.dccache
 
 # Logs
 logs
@@ -7,12 +14,7 @@ npm-debug.log*
 
 # Dependency directories
 node_modules
-jspm_packages/
-package-lock.json
-yarn.lock
-
-# TypeScript v1 declaration files
-typings/
+**/node_modules
 
 # TypeScript cache
 *.tsbuildinfo

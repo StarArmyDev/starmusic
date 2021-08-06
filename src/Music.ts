@@ -5,6 +5,9 @@ import { MusicSubscription } from './Suscription';
 import { Song, SongData } from './Song';
 import popyt from 'popyt';
 
+/**
+ * Clase base de módulo, dividiendo las funciones internas de las públicas
+ */
 export default abstract class Music {
     /**
      * Instancia de popyt para hacer búsquedas en YouTube.
@@ -313,13 +316,29 @@ export default abstract class Music {
                             this.sendReply(message, this.notaMsg('fail', 'No pude unirme al canal de voz. Vuelva a intentarlo más tarde.'));
                             reject('No pude unirme al canal de voz. Vuelva a intentarlo más tarde:' + err);
                         });
-                } else if (!(message.member as GuildMember).voice.channel.joinable) {
-                    this.sendReply(message, this.notaMsg('fail', 'No tengo permiso para unirme a tu canal de voz'));
-                    reject('No tengo permiso para unirme a tu canal de voz');
-                } else if ((message.member as GuildMember).voice.channel.full) {
-                    this.sendReply(message, this.notaMsg('fail', 'El canal ya está lleno'));
-                    reject('El canal ya está lleno');
-                } else resolve(subscription);
+                } else {
+                    subscription.onStart = (song: Song) => {
+                        if (this._new_song_message) this.sendMessage(message, song);
+                    };
+                    subscription.onAddQueue = (song: Song) => {
+                        this.sendMessageAddQueue(message, song);
+                    };
+                    subscription.onFinish = (sub: MusicSubscription) => {
+                        if (sub.queue.length == 0) {
+                            this.sendReply(message, this.notaMsg('note', 'Reproducción Terminada~'));
+                            sub.stop();
+                            sub.voiceConnection.disconnect();
+                        }
+                    };
+
+                    if (!(message.member as GuildMember).voice.channel.joinable) {
+                        this.sendReply(message, this.notaMsg('fail', 'No tengo permiso para unirme a tu canal de voz'));
+                        reject('No tengo permiso para unirme a tu canal de voz');
+                    } else if ((message.member as GuildMember).voice.channel.full) {
+                        this.sendReply(message, this.notaMsg('fail', 'El canal ya está lleno'));
+                        reject('El canal ya está lleno');
+                    } else resolve(subscription);
+                }
             else reject('No es una instancia de GuildMember');
         });
     }
@@ -400,13 +419,12 @@ export default abstract class Music {
             if (this._show_name)
                 embed.setFooter(`Por StarMusic | Solicitado por: ${resMem?.tag || `Usuario desconocido (${video.autorID})`}`, 'https://i.imgur.com/WKD5uUL.png');
 
-            this.sendReply(message, { embeds: [embed] });
+            message.channel.send({ embeds: [embed] });
         } else {
             let solicitado = '';
             if (this._show_name) solicitado = `| Solicitado por: \`${resMem?.tag || `Usuario desconocido (${video.autorID})`}\``;
 
-            this.sendReply(
-                message,
+            message.channel.send(
                 `🔊Escuchando ahora: **${video.title}** [Video](${video.url})\n⏭En cola: \`${subscription.queue.findIndex((sg) => sg.id == video.id) + 1}/${
                     subscription.queue.length
                 }\`\n👥Vistas: \`${video.views ? ConvertString(video.views) : 'S/D'}\`\nPor StarMusic ${solicitado}`
@@ -515,13 +533,12 @@ export default abstract class Music {
                 .setFooter('Por StarMusic', 'https://i.imgur.com/WKD5uUL.png');
             if (this._show_name) embed.setFooter(`Solicitado por: ${resMem?.username || `Usuario desconocido (${video.autorID})`}`, 'https://i.imgur.com/WKD5uUL.png');
 
-            this.sendReply(message, { embeds: [embed] });
+            message.channel.send({ embeds: [embed] });
         } else {
             let solicitado = '';
             if (this._show_name) solicitado = `| Solicitado por: \`${resMem?.tag || `Usuario desconocido (${video.autorID})`}\``;
 
-            this.sendReply(
-                message,
+            message.channel.send(
                 `⏭️Agregado a cola: **${video.title}** [Video](${video.url})\n⏲️Duración: \`${video.duration ? ConvertTime(video.duration) : 'S/D'}\`\nEn cola: \`${
                     subscription.queue.length
                 }\`\nPor StarMusic ${solicitado}`
@@ -545,12 +562,12 @@ export default abstract class Music {
                   ephemeral?: boolean;
               })
     ): Promise<Message> {
-        if ((message as CommandInteraction).commandId) {
-            if (typeof options == 'string') options = { content: options };
-            options.ephemeral = true;
-            const mensaje = (await (message as CommandInteraction).followUp(options)) as Message;
-            return mensaje;
-        } else return await message.channel.send(options);
+        if (typeof options == 'string') options = { content: options };
+
+        if (message instanceof Message) {
+            options.allowedMentions = { repliedUser: false };
+            return await (message as Message).reply(options);
+        } else return (await message.editReply(options)) as Message;
     }
 
     /**
@@ -579,7 +596,9 @@ export default abstract class Music {
     }
 }
 
-/** Interfaz para las opciones del módulo */
+/**
+ *  Interfaz para las opciones del módulo
+ */
 export interface MusicOpts {
     /**
      * Clave de la API de Youtube

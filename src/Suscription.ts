@@ -15,8 +15,7 @@ function wait(time: number): Promise<unknown> {
 }
 
 /**
- * Este archivo está basado en el código de ejemplo proporcionado por el staff de
- * Discord.js en GitHub.
+ * Este archivo está basado en el código de ejemplo proporcionado por Discord.js en GitHub.
  *
  * @see https://github.com/discordjs/voice/tree/main/examples/music-bot/src/music/subscription.ts
  */
@@ -39,9 +38,9 @@ export class MusicSubscription {
     public queueLock = false;
     public readyLock = false;
     public loop?: 'single' | 'all';
-    public readonly onStart: (song: Song) => void;
-    public readonly onAddQueue: (song: Song) => void;
-    public readonly onFinish: (subscription: MusicSubscription) => void;
+    public onStart: (song: Song) => void;
+    public onAddQueue: (song: Song) => void;
+    public onFinish: (subscription: MusicSubscription) => void;
     public readonly onDestroy: () => void;
     public readonly onError: (error: unknown) => void;
 
@@ -133,11 +132,9 @@ export class MusicSubscription {
      *
      * @param song Número de la posición de la canción a remover.
      */
-    public removeQueue(song?: number): void {
-        if (song) {
-            const cancion = this.queue.findIndex((_, i) => i == song);
-            if (cancion > -1) this.queue.splice(cancion, 1);
-        } else this.queue = [];
+    public removeQueue(song = -1): void {
+        if (song > -1) this.queue.splice(song, 1);
+        else this.queue = [];
     }
 
     /**
@@ -170,8 +167,9 @@ export class MusicSubscription {
                 this.queue.push(song);
             } else if (index + 1 == this.queue.length) nextSong = this.queue[0];
             else nextSong = this.queue[index + 1];
-        } else nextSong = this.queue.shift()!;
+        } else if (this.queue.length > 0) nextSong = this.queue.shift()!;
 
+        if (!nextSong) return;
         try {
             const resource = await nextSong.createAudioResource();
             this.audioPlayer.play(resource);

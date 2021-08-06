@@ -2,8 +2,7 @@ import { AudioResource, createAudioResource, demuxProbe } from '@discordjs/voice
 import { raw as ytdl } from 'youtube-dl-exec';
 
 /**
- * Este archivo está basado en el código de ejemplo proporcionado por el staff de
- * Discord.js en GitHub.
+ * Este archivo está basado en el código de ejemplo proporcionado por Discord.js en GitHub.
  *
  * @see https://github.com/discordjs/voice/tree/main/examples/music-bot/src/music/track.ts
  */
