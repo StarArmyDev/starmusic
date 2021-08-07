@@ -11,7 +11,7 @@
 
 </div>
 
-Módulo de música para bots en Discord.js con el que podrás implementar la capacidad de reproducir música a tus bots, siendo fácil y en español.
+Módulo de música para bots en Discord.js (v13) con el que podrás implementar la capacidad de reproducir música a tus bots, siendo fácil y en español.
 
 Para ver los cambios recientes, no olvides leer el documento [CHANGELOG.md](./CHANGELOG.md)
 
@@ -42,16 +42,16 @@ npm install --save starmusic
 
 ## Requiriendo el paquete
 
-Modo convencional
-
-```js
-const StarMusic = require('starmusic');
-```
-
-Usando EC6
+Usando ESM
 
 ```ts
 import StarMusic from 'starmusic';
+```
+
+Usando CommonJS
+
+```js
+const StarMusic = require('starmusic');
 ```
 
 ## Inicializar
@@ -246,26 +246,60 @@ const client = new Discord.Client();
 // Aquí iniciamos el módulo.
 var music = new StarMusic({
     youtubeKey: 'ApiKey',
-    adminRoles: ['IDRol'],
-    volumenDefault: 100
+    adminRoles: ['IDRol']
     // Puedes poner las opciones que necesites.
 });
 
 // Evento para ver cuando el bot ya prendió y está funcionando.
 client.on('ready', () => console.log('¡Encendido!'));
 
-// Escuchamos los mensajes con el evento "message".
-client.on('messages', (message) => {
-    // No hacemos nada si el usuario es un bot o el mensaje no empieza con el prefijo.
+// Escuchamos los mensajes con el evento "messageCreate".
+client.on('messageCreate', (message) => {
+    // No hacemos nada si el mensaje no empieza con el prefijo o el usuario es un bot.
     if (!message.content.startsWith(prefix) || message.author.bot) return;
 
     if (message.content.startsWith(prefix + 'play')) {
-        let args = message.content.slice(prefix.length + 4); // Aquí medimos nuestro prefix y sumamos 4 por el largo de la palabra "play"
+        // Aquí medimos nuestro prefix y sumamos 4 por el largo de la palabra "play"
+        let args = message.content.slice(prefix.length + 4);
+
         music.play(message, args.join(' '));
     }
 });
 
 client.login('SecretToken');
+```
+
+En TypeScript
+
+```ts
+import { Client, Message } from "discord.jsdiscord.js";
+import StarMusic from "starmusic";
+
+const prefix = '!';
+const client = new Client();
+
+// Iniciamos el módulo.
+var starmusic = new StarMusic({
+    youtubeKey: 'ApiKey'
+});
+
+// Escuchamos el evento "ready".
+client.on('ready', () => console.log('¡Encendido!'));
+
+// Escuchamos el evento "messageCreate".
+client.on('messageCreate', (message: Message) => {
+    // Retornamos si el mensaje no empieza con el prefijo o el usuario es un bot.
+    if (!message.content.startsWith(prefix) || message.author.bot) return;
+
+    if (message.content.startsWith(prefix + 'play')) {
+        let args = message.content.slice(prefix.length + 4);
+
+        starmusic.play(message, args.join(' '));
+    }
+});
+
+// "TOKEN_BOT" Se define como variable de entorno en tu sistema operativo o usando dotenv y un archivo .env
+client.login(process.env.TOKEN_BOT as string);
 ```
 
 ### Usando Command handling (Nivel intermedio)
@@ -305,8 +339,8 @@ for (const file of commandFiles) {
 // Nuestro evento común de encendido
 client.on('ready', () => console.log('¡Encendido!'));
 
-// Escuchamos los mensajes con el evento "message".
-client.on('messages', (message) => {
+// Escuchamos los mensajes con el evento "messageCreate".
+client.on('messageCreate', (message) => {
     if (!message.content.startsWith(prefix) || message.author.bot) return;
 
     const args = message.content.slice(prefix.length).trim().split(/ +/);
@@ -377,7 +411,7 @@ client.on('ready', () => console.log('¡Encendido!'));
  */
 
 // Escuchamos los comandos con el evento "interaction".
-client.on('interaction', (interaction) => {
+client.on('interactionCreate', (interaction) => {
     // Si nuestra interacción no es un comando, retornamos sin hacer nada
     if (!interaction.isCommand()) return;
 

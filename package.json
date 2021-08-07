@@ -1,9 +1,12 @@
 {
     "name": "starmusic",
-    "version": "3.0.0-dev",
+    "version": "3.0.0",
     "description": "Reproduce tu música fácilmente, en español y sin complicaciones.",
     "main": "./dist/Main",
     "typings": "./dist/Main.d.ts",
+    "engines": {
+        "node": ">=16.6.x"
+    },
     "scripts": {
         "docs": "typedoc",
         "test": "mocha -r ts-node/register --extension ts",
@@ -34,7 +37,7 @@
         "español",
         "discord",
         "discord.js",
-        "bot",
+        "starlight",
         "youtube-discord"
     ],
     "files": [
@@ -42,8 +45,8 @@
     ],
     "dependencies": {
         "@discordjs/opus": "^0.5.3",
-        "@discordjs/voice": "^0.5.5",
-        "discord.js": "^13.0.0",
+        "@discordjs/voice": "^0.5.6",
+        "discord.js": "^13.0.1",
         "ffmpeg-static": "^4.4.0",
         "popyt": "^5.0.0",
         "tweetnacl": "^1.0.3",

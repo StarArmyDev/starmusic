@@ -7,11 +7,11 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ## [Unreleased]
 
-## [v3.0.0] - 2021-00-00
+## [v3.0.0] - 2021-08-07
 
 ## Added
 
-- Soporte para ser usado en slash commands y pasar un `CommandInteraction` en vez de `Message` de las funciones.
+- Soporte para ser usado en slash commands y pasar un `CommandInteraction` en vez de `Message` en las funciones.
 - Se exportan más propiedades que el StarMusic constructor por defecto para dar más libertad a los desarrolladores avanzados de crear más funcionalidades.
 
 ### Fixed
@@ -21,11 +21,13 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.
 ### Changed
 
 - **[BREAKING]** Cambio de versión de discord.js a v13
+- **[BREAKING]** Se requiere uan versión de node 16.6 o superior para funcionar.
 - Mejoras en el aspecto visual de los mensajes enviados quitando y poniendo información necesaria en cada uno.
 
 ### Removed
 
 - **[BREAKING]** Se eliminó la función `volume` para mejorar el rendimiento del bot evitando dicho proceso.
+- **[BREAKING]** Se eliminó la opción `volumeDefault` del constructor.
 - Reproductor removido por el momento.
 
 ## [v2.0.1] - 2021-03-04
