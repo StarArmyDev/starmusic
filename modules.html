@@ -2684,7 +2684,19 @@ img {
 <nav class="tsd-navigation secondary">
 	<ul>
 		<li class=" tsd-kind-class">
+			<a href="classes/Music.html" class="tsd-kind-icon">Music</a>
+		</li>
+		<li class=" tsd-kind-class">
+			<a href="classes/MusicSubscription.html" class="tsd-kind-icon">Music<wbr>Subscription</a>
+		</li>
+		<li class=" tsd-kind-class">
+			<a href="classes/Song.html" class="tsd-kind-icon">Song</a>
+		</li>
+		<li class=" tsd-kind-class">
 			<a href="classes/default.html" class="tsd-kind-icon">default</a>
+		</li>
+		<li class=" tsd-kind-interface">
+			<a href="interfaces/SongData.html" class="tsd-kind-icon">Song<wbr>Data</a>
 		</li>
 	</ul>
 </nav>
@@ -2693,12 +2705,13 @@ img {
 		<div class="tsd-panel tsd-typography">
 			<div align="center">
 				<img src="./media/logo.png" height="180">
-				<p><a href="https://www.npmjs.com/package/starmusic"><img src="https://img.shields.io/npm/v/starmusic?maxAge=3600" alt="NPM version"></a>
-				<a href="https://www.npmjs.com/package/starmusic"><img src="https://img.shields.io/npm/dt/starmusic?maxAge=3600" alt="NPM downloads"></a> <a href="https://github.com/StarArmyDev/starmusic/actions?query=workflow%3A%22ESLint%22"><img src="https://github.com/StarArmyDev/starmusic/workflows/ESLint/badge.svg" alt="ESLint status"></a> <a href="https://deepscan.io/dashboard/#view=project&amp;tid=12942&amp;pid=15986&amp;bid=329941"><img src="https://deepscan.io/api/teams/12942/projects/15986/branches/329941/badge/grade.svg" alt="DeepScan grade"></a> <a href="https://discord.gg/VG6D4ss"><img src="https://discordapp.com/api/guilds/491819854307917826/widget.png?style=shield" alt="dev chat"></a></p>
+				<p><a href="https://www.npmjs.com/package/starmusic"><img src="https://img.shields.io/npm/v/starmusic?maxAge=3600" alt="Versión de NPM"></a>
+				<a href="https://www.npmjs.com/package/starmusic"><img src="https://img.shields.io/npm/dt/starmusic?maxAge=3600" alt="Descargas de NPM"></a> <a href="https://github.com/StarArmyDev/starmusic/actions?query=workflow%3A%22ESLint%22"><img src="https://github.com/StarArmyDev/starmusic/workflows/ESLint/badge.svg" alt="Estado ESLint"></a> <a href="https://snyk.io/test/github/StarArmyDev/starmusic?targetFile=package.json"><img src="https://snyk.io/test/github/StarArmyDev/starmusic/badge.svg" alt="Vulnerabilidades Conocidas"></a> <a href="https://deepscan.io/dashboard/#view=project&amp;tid=12942&amp;pid=16035&amp;bid=333292"><img src="https://deepscan.io/api/teams/12942/projects/16035/branches/333292/badge/grade.svg" alt="DeepScan grade"></a> <a href="https://wakatime.com/badge/github/StarArmyDev/starmusic"><img src="https://wakatime.com/badge/github/StarArmyDev/starmusic.svg" alt="time tracker"></a> <a href="https://discord.gg/VG6D4ss"><img src="https://discordapp.com/api/guilds/491819854307917826/widget.png?style=shield" alt="Chat de Discord"></a></p>
 				<p><a href="https://nodei.co/npm/starmusic/"><img src="https://nodei.co/npm/starmusic.png?downloads=true&stars=true" alt="npm installnfo" title="npm installnfo"></a></p>
 				<p><a href="https://forthebadge.com"><img src="https://forthebadge.com/images/badges/made-with-typescript.svg" alt="forthebadge"></a></p>
 			</div>
-			<p>Módulo fácil de imprementar para tu bot de Discord con el cual podrás crear bots de música en español enfocada para discord.js.</p>
+			<p>Módulo de música para bots en Discord.js (v13) con el que podrás implementar la capacidad de reproducir música a tus bots, siendo fácil y en español.</p>
+			<p>Para ver los cambios recientes, no olvides leer el documento <a href="./CHANGELOG.md">CHANGELOG.md</a></p>
 			<a href="#instalación" id="instalación" style="color: inherit; text-decoration: none;">
 				<h2>Instalación</h2>
 			</a>
@@ -2718,7 +2731,6 @@ img {
 				<li><a href="#repeat">repeat</a></li>
 				<li><a href="#queue">queue</a></li>
 				<li><a href="#remove">remove</a></li>
-				<li><a href="#volume">volume</a></li>
 				<li><a href="#clear">clear</a></li>
 			</ul>
 			<a href="#configuraciones" id="configuraciones" style="color: inherit; text-decoration: none;">
@@ -2731,11 +2743,11 @@ img {
 			<a href="#requiriendo-el-paquete" id="requiriendo-el-paquete" style="color: inherit; text-decoration: none;">
 				<h2>Requiriendo el paquete</h2>
 			</a>
-			<p>Modo convencional</p>
-			<pre><code class="language-js"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">StarMusic</span><span style="color: #000000"> = </span><span style="color: #795E26">require</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;starmusic&#039;</span><span style="color: #000000">);</span>
-</code></pre>
-			<p>Usando EC6</p>
+			<p>Usando ESM</p>
 			<pre><code class="language-ts"><span style="color: #AF00DB">import</span><span style="color: #000000"> </span><span style="color: #001080">StarMusic</span><span style="color: #000000"> </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;starmusic&#039;</span><span style="color: #000000">;</span>
+</code></pre>
+			<p>Usando CommonJS</p>
+			<pre><code class="language-js"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">StarMusic</span><span style="color: #000000"> = </span><span style="color: #795E26">require</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;starmusic&#039;</span><span style="color: #000000">);</span>
 </code></pre>
 			<a href="#inicializar" id="inicializar" style="color: inherit; text-decoration: none;">
 				<h2>Inicializar</h2>
@@ -2877,19 +2889,6 @@ img {
 				<li>message: Corresponde a la variable <code>message</code> de tu evento <code>messages</code> de Discord.</li>
 				<li>song: Número correspondiente a la posision de la canción a quitar.</li>
 			</ol>
-			<a href="#volume" id="volume" style="color: inherit; text-decoration: none;">
-				<h1>Volume</h1>
-			</a>
-			<pre><code class="language-js"><span style="color: #795E26">volume</span><span style="color: #000000">(</span><span style="color: #001080">message</span><span style="color: #000000">, </span><span style="color: #001080">volume</span><span style="color: #000000">);</span>
-</code></pre>
-			<p>Establece el volumen de la música entre 0 a 200 con que la música sonará independiente del volumen del bot en discord. <em>(se puede establecer el volumen por defecto en {opciones})</em></p>
-			<ul>
-				<li><strong>Argumentos</strong></li>
-			</ul>
-			<ol>
-				<li>message: Corresponde a la variable <code>message</code> de tu evento <code>messages</code> de Discord.</li>
-				<li>volume: Número válido entre 0 a 200.</li>
-			</ol>
 			<a href="#clear" id="clear" style="color: inherit; text-decoration: none;">
 				<h1>Clear</h1>
 			</a>
@@ -2926,12 +2925,6 @@ img {
 						<td>String</td>
 						<td>Color que se le dará a los embeds en hexadesimal o colores reservados de discord.js</td>
 						<td>RED</td>
-					</tr>
-					<tr>
-						<td>volumeDefault</td>
-						<td>Number</td>
-						<td>Volumen por defecto con el cual iniciarán todas las canciones de 1 a 200</td>
-						<td>50</td>
 					</tr>
 					<tr>
 						<td>emoji</td>
@@ -3017,28 +3010,60 @@ img {
 <span style="color: #008000">// Aquí iniciamos el módulo.</span>
 <span style="color: #0000FF">var</span><span style="color: #000000"> </span><span style="color: #001080">music</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">StarMusic</span><span style="color: #000000">({</span>
 <span style="color: #000000">    </span><span style="color: #001080">youtubeKey:</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;ApiKey&#039;</span><span style="color: #000000">,</span>
-<span style="color: #000000">    </span><span style="color: #001080">adminRoles:</span><span style="color: #000000"> [</span><span style="color: #A31515">&#039;IDRol&#039;</span><span style="color: #000000">],</span>
-<span style="color: #000000">    </span><span style="color: #001080">volumenDefault:</span><span style="color: #000000"> </span><span style="color: #098658">100</span>
+<span style="color: #000000">    </span><span style="color: #001080">adminRoles:</span><span style="color: #000000"> [</span><span style="color: #A31515">&#039;IDRol&#039;</span><span style="color: #000000">]</span>
 <span style="color: #000000">    </span><span style="color: #008000">// Puedes poner las opciones que necesites.</span>
 <span style="color: #000000">});</span>
 
 <span style="color: #008000">// Evento para ver cuando el bot ya prendió y está funcionando.</span>
 <span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">on</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;ready&#039;</span><span style="color: #000000">, () </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> </span><span style="color: #001080">console</span><span style="color: #000000">.</span><span style="color: #795E26">log</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;¡Encendido!&#039;</span><span style="color: #000000">));</span>
 
-<span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">on</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;messages&#039;</span><span style="color: #000000">, (</span><span style="color: #001080">message</span><span style="color: #000000">) </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
-<span style="color: #000000">    </span><span style="color: #008000">// No hacemos nada si el usuario es un bot o el mensaje no empieza con el prefijo.</span>
+<span style="color: #008000">// Escuchamos los mensajes con el evento &quot;messageCreate&quot;.</span>
+<span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">on</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;messageCreate&#039;</span><span style="color: #000000">, (</span><span style="color: #001080">message</span><span style="color: #000000">) </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
+<span style="color: #000000">    </span><span style="color: #008000">// No hacemos nada si el mensaje no empieza con el prefijo o el usuario es un bot.</span>
 <span style="color: #000000">    </span><span style="color: #AF00DB">if</span><span style="color: #000000"> (!</span><span style="color: #001080">message</span><span style="color: #000000">.</span><span style="color: #001080">content</span><span style="color: #000000">.</span><span style="color: #795E26">startsWith</span><span style="color: #000000">(</span><span style="color: #001080">prefix</span><span style="color: #000000">) || </span><span style="color: #001080">message</span><span style="color: #000000">.</span><span style="color: #001080">author</span><span style="color: #000000">.</span><span style="color: #001080">bot</span><span style="color: #000000">) </span><span style="color: #AF00DB">return</span><span style="color: #000000">;</span>
 
 <span style="color: #000000">    </span><span style="color: #AF00DB">if</span><span style="color: #000000"> (</span><span style="color: #001080">message</span><span style="color: #000000">.</span><span style="color: #001080">content</span><span style="color: #000000">.</span><span style="color: #795E26">startsWith</span><span style="color: #000000">(</span><span style="color: #001080">prefix</span><span style="color: #000000"> + </span><span style="color: #A31515">&#039;play&#039;</span><span style="color: #000000">)) {</span>
-<span style="color: #000000">        </span><span style="color: #0000FF">let</span><span style="color: #000000"> </span><span style="color: #001080">args</span><span style="color: #000000"> = </span><span style="color: #001080">message</span><span style="color: #000000">.</span><span style="color: #001080">content</span><span style="color: #000000">.</span><span style="color: #795E26">slice</span><span style="color: #000000">(</span><span style="color: #001080">prefix</span><span style="color: #000000">.</span><span style="color: #001080">length</span><span style="color: #000000"> + </span><span style="color: #098658">4</span><span style="color: #000000">); </span><span style="color: #008000">// Aquí medimos nuestro prefix y sumamos 4 por el largo de la palabra &quot;play&quot;</span>
+<span style="color: #000000">        </span><span style="color: #008000">// Aquí medimos nuestro prefix y sumamos 4 por el largo de la palabra &quot;play&quot;</span>
+<span style="color: #000000">        </span><span style="color: #0000FF">let</span><span style="color: #000000"> </span><span style="color: #001080">args</span><span style="color: #000000"> = </span><span style="color: #001080">message</span><span style="color: #000000">.</span><span style="color: #001080">content</span><span style="color: #000000">.</span><span style="color: #795E26">slice</span><span style="color: #000000">(</span><span style="color: #001080">prefix</span><span style="color: #000000">.</span><span style="color: #001080">length</span><span style="color: #000000"> + </span><span style="color: #098658">4</span><span style="color: #000000">);</span>
+
 <span style="color: #000000">        </span><span style="color: #001080">music</span><span style="color: #000000">.</span><span style="color: #795E26">play</span><span style="color: #000000">(</span><span style="color: #001080">message</span><span style="color: #000000">, </span><span style="color: #001080">args</span><span style="color: #000000">.</span><span style="color: #795E26">join</span><span style="color: #000000">(</span><span style="color: #A31515">&#039; &#039;</span><span style="color: #000000">));</span>
 <span style="color: #000000">    }</span>
 <span style="color: #000000">});</span>
 
 <span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">login</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;SecretToken&#039;</span><span style="color: #000000">);</span>
 </code></pre>
-			<a href="#usando-command-handling-nivel-medio" id="usando-command-handling-nivel-medio" style="color: inherit; text-decoration: none;">
-				<h3>Usando Command handling (Nivel medio)</h3>
+			<p>En TypeScript</p>
+			<pre><code class="language-ts"><span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">Client</span><span style="color: #000000">, </span><span style="color: #001080">Message</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&quot;discord.jsdiscord.js&quot;</span><span style="color: #000000">;</span>
+<span style="color: #AF00DB">import</span><span style="color: #000000"> </span><span style="color: #001080">StarMusic</span><span style="color: #000000"> </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&quot;starmusic&quot;</span><span style="color: #000000">;</span>
+
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">prefix</span><span style="color: #000000"> = </span><span style="color: #A31515">&#039;!&#039;</span><span style="color: #000000">;</span>
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">client</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">Client</span><span style="color: #000000">();</span>
+
+<span style="color: #008000">// Iniciamos el módulo.</span>
+<span style="color: #0000FF">var</span><span style="color: #000000"> </span><span style="color: #001080">starmusic</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">StarMusic</span><span style="color: #000000">({</span>
+<span style="color: #000000">    </span><span style="color: #001080">youtubeKey:</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;ApiKey&#039;</span>
+<span style="color: #000000">});</span>
+
+<span style="color: #008000">// Escuchamos el evento &quot;ready&quot;.</span>
+<span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">on</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;ready&#039;</span><span style="color: #000000">, () </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> </span><span style="color: #001080">console</span><span style="color: #000000">.</span><span style="color: #795E26">log</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;¡Encendido!&#039;</span><span style="color: #000000">));</span>
+
+<span style="color: #008000">// Escuchamos el evento &quot;messageCreate&quot;.</span>
+<span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">on</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;messageCreate&#039;</span><span style="color: #000000">, (</span><span style="color: #001080">message</span><span style="color: #000000">: </span><span style="color: #267F99">Message</span><span style="color: #000000">) </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
+<span style="color: #000000">    </span><span style="color: #008000">// Retornamos si el mensaje no empieza con el prefijo o el usuario es un bot.</span>
+<span style="color: #000000">    </span><span style="color: #AF00DB">if</span><span style="color: #000000"> (!</span><span style="color: #001080">message</span><span style="color: #000000">.</span><span style="color: #001080">content</span><span style="color: #000000">.</span><span style="color: #795E26">startsWith</span><span style="color: #000000">(</span><span style="color: #001080">prefix</span><span style="color: #000000">) || </span><span style="color: #001080">message</span><span style="color: #000000">.</span><span style="color: #001080">author</span><span style="color: #000000">.</span><span style="color: #001080">bot</span><span style="color: #000000">) </span><span style="color: #AF00DB">return</span><span style="color: #000000">;</span>
+
+<span style="color: #000000">    </span><span style="color: #AF00DB">if</span><span style="color: #000000"> (</span><span style="color: #001080">message</span><span style="color: #000000">.</span><span style="color: #001080">content</span><span style="color: #000000">.</span><span style="color: #795E26">startsWith</span><span style="color: #000000">(</span><span style="color: #001080">prefix</span><span style="color: #000000"> + </span><span style="color: #A31515">&#039;play&#039;</span><span style="color: #000000">)) {</span>
+<span style="color: #000000">        </span><span style="color: #0000FF">let</span><span style="color: #000000"> </span><span style="color: #001080">args</span><span style="color: #000000"> = </span><span style="color: #001080">message</span><span style="color: #000000">.</span><span style="color: #001080">content</span><span style="color: #000000">.</span><span style="color: #795E26">slice</span><span style="color: #000000">(</span><span style="color: #001080">prefix</span><span style="color: #000000">.</span><span style="color: #001080">length</span><span style="color: #000000"> + </span><span style="color: #098658">4</span><span style="color: #000000">);</span>
+
+<span style="color: #000000">        </span><span style="color: #001080">starmusic</span><span style="color: #000000">.</span><span style="color: #795E26">play</span><span style="color: #000000">(</span><span style="color: #001080">message</span><span style="color: #000000">, </span><span style="color: #001080">args</span><span style="color: #000000">.</span><span style="color: #795E26">join</span><span style="color: #000000">(</span><span style="color: #A31515">&#039; &#039;</span><span style="color: #000000">));</span>
+<span style="color: #000000">    }</span>
+<span style="color: #000000">});</span>
+
+<span style="color: #008000">// &quot;TOKEN_BOT&quot; Se define como variable de entorno en tu sistema operativo o usando dotenv y un archivo .env</span>
+<span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">login</span><span style="color: #000000">(</span><span style="color: #001080">process</span><span style="color: #000000">.</span><span style="color: #001080">env</span><span style="color: #000000">.</span><span style="color: #0070C1">TOKEN_BOT</span><span style="color: #000000"> </span><span style="color: #AF00DB">as</span><span style="color: #000000"> </span><span style="color: #267F99">string</span><span style="color: #000000">);</span>
+</code></pre>
+			<a href="#usando-command-handling-nivel-intermedio" id="usando-command-handling-nivel-intermedio" style="color: inherit; text-decoration: none;">
+				<h3>Usando Command handling (Nivel intermedio)</h3>
 			</a>
 			<p>En nuestro archivo principal. Comunmente llamado <code>index.js</code>.</p>
 			<pre><code class="language-js"><span style="color: #008000">// Declaramos la base</span>
@@ -3050,8 +3075,8 @@ img {
 <span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">client</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #001080">Discord</span><span style="color: #000000">.</span><span style="color: #795E26">Client</span><span style="color: #000000">();</span>
 <span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #001080">commands</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #001080">Discord</span><span style="color: #000000">.</span><span style="color: #795E26">Collection</span><span style="color: #000000">();</span>
 
-<span style="color: #008000">// Aquí iniciamos el módulo.</span>
-<span style="color: #0000FF">var</span><span style="color: #000000"> </span><span style="color: #001080">music</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">StarMusic</span><span style="color: #000000">({</span>
+<span style="color: #008000">// Aquí iniciamos el módulo y lo pasaremos por el cliente.</span>
+<span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #001080">music</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">StarMusic</span><span style="color: #000000">({</span>
 <span style="color: #000000">    </span><span style="color: #001080">youtubeKey:</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;ApiKey&#039;</span><span style="color: #000000">,</span>
 <span style="color: #000000">    </span><span style="color: #001080">djRoles:</span><span style="color: #000000"> [</span><span style="color: #A31515">&#039;IDRol&#039;</span><span style="color: #000000">, </span><span style="color: #A31515">&#039;IDRol2&#039;</span><span style="color: #000000">],</span>
 <span style="color: #000000">    </span><span style="color: #001080">embedColor:</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;BLUE&#039;</span>
@@ -3070,10 +3095,11 @@ img {
 <span style="color: #000000">    </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #001080">commands</span><span style="color: #000000">.</span><span style="color: #795E26">set</span><span style="color: #000000">(</span><span style="color: #001080">command</span><span style="color: #000000">.</span><span style="color: #001080">name</span><span style="color: #000000">, </span><span style="color: #001080">command</span><span style="color: #000000">);</span>
 <span style="color: #000000">}</span>
 
-<span style="color: #008000">// Nuestros eventos comunes...</span>
+<span style="color: #008000">// Nuestro evento común de encendido</span>
 <span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">on</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;ready&#039;</span><span style="color: #000000">, () </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> </span><span style="color: #001080">console</span><span style="color: #000000">.</span><span style="color: #795E26">log</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;¡Encendido!&#039;</span><span style="color: #000000">));</span>
 
-<span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">on</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;messages&#039;</span><span style="color: #000000">, (</span><span style="color: #001080">message</span><span style="color: #000000">) </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
+<span style="color: #008000">// Escuchamos los mensajes con el evento &quot;messageCreate&quot;.</span>
+<span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">on</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;messageCreate&#039;</span><span style="color: #000000">, (</span><span style="color: #001080">message</span><span style="color: #000000">) </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
 <span style="color: #000000">    </span><span style="color: #AF00DB">if</span><span style="color: #000000"> (!</span><span style="color: #001080">message</span><span style="color: #000000">.</span><span style="color: #001080">content</span><span style="color: #000000">.</span><span style="color: #795E26">startsWith</span><span style="color: #000000">(</span><span style="color: #001080">prefix</span><span style="color: #000000">) || </span><span style="color: #001080">message</span><span style="color: #000000">.</span><span style="color: #001080">author</span><span style="color: #000000">.</span><span style="color: #001080">bot</span><span style="color: #000000">) </span><span style="color: #AF00DB">return</span><span style="color: #000000">;</span>
 
 <span style="color: #000000">    </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">args</span><span style="color: #000000"> = </span><span style="color: #001080">message</span><span style="color: #000000">.</span><span style="color: #001080">content</span><span style="color: #000000">.</span><span style="color: #795E26">slice</span><span style="color: #000000">(</span><span style="color: #001080">prefix</span><span style="color: #000000">.</span><span style="color: #001080">length</span><span style="color: #000000">).</span><span style="color: #795E26">trim</span><span style="color: #000000">().</span><span style="color: #795E26">split</span><span style="color: #000000">(</span><span style="color: #811F3F">/ </span><span style="color: #000000">+</span><span style="color: #811F3F">/</span><span style="color: #000000">);</span>
@@ -3081,7 +3107,7 @@ img {
 
 <span style="color: #000000">    </span><span style="color: #AF00DB">if</span><span style="color: #000000"> (</span><span style="color: #001080">command</span><span style="color: #000000"> == </span><span style="color: #A31515">&#039;play&#039;</span><span style="color: #000000">) {</span>
 <span style="color: #000000">        </span><span style="color: #008000">// Obtenemos nuestro comando y ejecutamos su función execute.</span>
-<span style="color: #000000">        </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #001080">commands</span><span style="color: #000000">.</span><span style="color: #795E26">get</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;play&#039;</span><span style="color: #000000">).</span><span style="color: #795E26">execute</span><span style="color: #000000">(</span><span style="color: #001080">message</span><span style="color: #000000">, </span><span style="color: #001080">args</span><span style="color: #000000">);</span>
+<span style="color: #000000">        </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #001080">commands</span><span style="color: #000000">.</span><span style="color: #795E26">get</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;play&#039;</span><span style="color: #000000">).</span><span style="color: #795E26">execute</span><span style="color: #000000">(</span><span style="color: #001080">client</span><span style="color: #000000">, </span><span style="color: #001080">message</span><span style="color: #000000">, </span><span style="color: #001080">args</span><span style="color: #000000">);</span>
 <span style="color: #000000">    }</span>
 <span style="color: #000000">});</span>
 
@@ -3091,12 +3117,71 @@ img {
 			<pre><code class="language-js"><span style="color: #267F99">module</span><span style="color: #000000">.</span><span style="color: #267F99">exports</span><span style="color: #000000"> = {</span>
 <span style="color: #000000">    </span><span style="color: #001080">name:</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;play&#039;</span><span style="color: #000000">,</span>
 <span style="color: #000000">    </span><span style="color: #001080">description:</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;Reproduce una canción&#039;</span><span style="color: #000000">,</span>
-<span style="color: #000000">    </span><span style="color: #795E26">execute</span><span style="color: #000000">(</span><span style="color: #001080">message</span><span style="color: #000000">, </span><span style="color: #001080">args</span><span style="color: #000000">) {</span>
-<span style="color: #000000">        </span><span style="color: #001080">music</span><span style="color: #000000">.</span><span style="color: #795E26">play</span><span style="color: #000000">(</span><span style="color: #001080">message</span><span style="color: #000000">, </span><span style="color: #001080">args</span><span style="color: #000000">.</span><span style="color: #795E26">join</span><span style="color: #000000">(</span><span style="color: #A31515">&#039; &#039;</span><span style="color: #000000">));</span>
+<span style="color: #000000">    </span><span style="color: #795E26">execute</span><span style="color: #000000">(</span><span style="color: #001080">client</span><span style="color: #000000">, </span><span style="color: #001080">message</span><span style="color: #000000">, </span><span style="color: #001080">args</span><span style="color: #000000">) {</span>
+<span style="color: #000000">        </span><span style="color: #008000">// Ejecutamos la función play</span>
+<span style="color: #000000">        </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #001080">music</span><span style="color: #000000">.</span><span style="color: #795E26">play</span><span style="color: #000000">(</span><span style="color: #001080">message</span><span style="color: #000000">, </span><span style="color: #001080">args</span><span style="color: #000000">.</span><span style="color: #795E26">join</span><span style="color: #000000">(</span><span style="color: #A31515">&#039; &#039;</span><span style="color: #000000">));</span>
 <span style="color: #000000">    }</span>
 <span style="color: #000000">};</span>
 </code></pre>
-			<p>Puedes ver una guía completa de ¿Cómo hacer manejo de comandos? en <a href="https://discordjs.guide/command-handling/" title="Discord.js">esta guía</a> <em>(En inglés)</em></p>
+			<p>Puedes ver una guía completa de como hacer manejo de comandos en <a href="https://discordjs.guide/command-handling/" title="Discord.js">esta guía</a> <em>(En inglés)</em></p>
+			<a href="#usando-en-slashcommands" id="usando-en-slashcommands" style="color: inherit; text-decoration: none;">
+				<h3>Usando en SlashCommands</h3>
+			</a>
+			<p>En nuestro archivo principal. Comunmente llamado <code>index.js</code>.</p>
+			<pre><code class="language-js"><span style="color: #008000">// Declaramos la base</span>
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">Discord</span><span style="color: #000000"> = </span><span style="color: #795E26">require</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;discord.js&#039;</span><span style="color: #000000">);</span>
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">StarMusic</span><span style="color: #000000"> = </span><span style="color: #795E26">require</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;starmusic&#039;</span><span style="color: #000000">);</span>
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">fs</span><span style="color: #000000"> = </span><span style="color: #795E26">require</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;fs&#039;</span><span style="color: #000000">);</span>
+
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">prefix</span><span style="color: #000000"> = </span><span style="color: #A31515">&#039;!&#039;</span><span style="color: #000000">;</span>
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">client</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #001080">Discord</span><span style="color: #000000">.</span><span style="color: #795E26">Client</span><span style="color: #000000">();</span>
+<span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #001080">commands</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #001080">Discord</span><span style="color: #000000">.</span><span style="color: #795E26">Collection</span><span style="color: #000000">();</span>
+
+<span style="color: #008000">// Aquí iniciamos el módulo y lo pasaremos por el cliente.</span>
+<span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #001080">music</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">StarMusic</span><span style="color: #000000">({</span>
+<span style="color: #000000">    </span><span style="color: #001080">youtubeKey:</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;ApiKey&#039;</span><span style="color: #000000">,</span>
+<span style="color: #000000">    </span><span style="color: #001080">djRoles:</span><span style="color: #000000"> [</span><span style="color: #A31515">&#039;IDRol&#039;</span><span style="color: #000000">, </span><span style="color: #A31515">&#039;IDRol2&#039;</span><span style="color: #000000">],</span>
+<span style="color: #000000">    </span><span style="color: #001080">embedColor:</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;BLUE&#039;</span>
+<span style="color: #000000">});</span>
+
+<span style="color: #008000">// Nuestros eventos comunes...</span>
+<span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">on</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;ready&#039;</span><span style="color: #000000">, () </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> </span><span style="color: #001080">console</span><span style="color: #000000">.</span><span style="color: #795E26">log</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;¡Encendido!&#039;</span><span style="color: #000000">));</span>
+
+<span style="color: #008000">/* Debes de crear los slashCommands previamente conforme a lo que requieras</span>
+<span style="color: #008000"> * por ejemplo:</span>
+<span style="color: #008000"> * {</span>
+<span style="color: #008000"> *     name: &quot;play&quot;,</span>
+<span style="color: #008000"> *     description: &quot;Reproduce una canción de Youtube por su nombre o su url.&quot;,</span>
+<span style="color: #008000"> *     options: [</span>
+<span style="color: #008000"> *         {</span>
+<span style="color: #008000"> *             name: &quot;song&quot;,</span>
+<span style="color: #008000"> *             type: &quot;STRING&quot;,</span>
+<span style="color: #008000"> *             description: &quot;Nombre de la canción o url a buscar.&quot;,</span>
+<span style="color: #008000"> *             required: true</span>
+<span style="color: #008000"> *         }</span>
+<span style="color: #008000"> *     ]</span>
+<span style="color: #008000"> * }</span>
+<span style="color: #008000"> */</span>
+
+<span style="color: #008000">// Escuchamos los comandos con el evento &quot;interaction&quot;.</span>
+<span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">on</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;interactionCreate&#039;</span><span style="color: #000000">, (</span><span style="color: #001080">interaction</span><span style="color: #000000">) </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
+<span style="color: #000000">    </span><span style="color: #008000">// Si nuestra interacción no es un comando, retornamos sin hacer nada</span>
+<span style="color: #000000">    </span><span style="color: #AF00DB">if</span><span style="color: #000000"> (!</span><span style="color: #001080">interaction</span><span style="color: #000000">.</span><span style="color: #795E26">isCommand</span><span style="color: #000000">()) </span><span style="color: #AF00DB">return</span><span style="color: #000000">;</span>
+
+<span style="color: #000000">    </span><span style="color: #008000">// Si es comando se llama play</span>
+<span style="color: #000000">    </span><span style="color: #AF00DB">if</span><span style="color: #000000"> (</span><span style="color: #001080">interaction</span><span style="color: #000000">.</span><span style="color: #001080">commandName</span><span style="color: #000000"> === </span><span style="color: #A31515">&#039;play&#039;</span><span style="color: #000000">) {</span>
+<span style="color: #000000">        </span><span style="color: #008000">// Tomamos el valor de búsqueda llamada song</span>
+<span style="color: #000000">        </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">url</span><span style="color: #000000"> = </span><span style="color: #001080">interaction</span><span style="color: #000000">.</span><span style="color: #001080">options</span><span style="color: #000000">.</span><span style="color: #795E26">get</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;song&#039;</span><span style="color: #000000">).</span><span style="color: #001080">value</span><span style="color: #000000">;</span>
+<span style="color: #000000">        </span><span style="color: #008000">// Ejecutamos la función play</span>
+<span style="color: #000000">        </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #001080">music</span><span style="color: #000000">.</span><span style="color: #795E26">play</span><span style="color: #000000">(</span><span style="color: #001080">interaction</span><span style="color: #000000">, </span><span style="color: #001080">url</span><span style="color: #000000">);</span>
+<span style="color: #000000">        </span><span style="color: #008000">// Si es comando se llama leave</span>
+<span style="color: #000000">    } </span><span style="color: #AF00DB">else</span><span style="color: #000000"> </span><span style="color: #AF00DB">if</span><span style="color: #000000"> (</span><span style="color: #001080">interaction</span><span style="color: #000000">.</span><span style="color: #001080">commandName</span><span style="color: #000000"> === </span><span style="color: #A31515">&#039;leave&#039;</span><span style="color: #000000">) {</span>
+<span style="color: #000000">        </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #001080">music</span><span style="color: #000000">.</span><span style="color: #795E26">leave</span><span style="color: #000000">(</span><span style="color: #001080">interaction</span><span style="color: #000000">);</span>
+<span style="color: #000000">    }</span>
+<span style="color: #000000">});</span>
+
+<span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">login</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;SecretToken&#039;</span><span style="color: #000000">);</span>
+</code></pre>
 			<a href="#soporte" id="soporte" style="color: inherit; text-decoration: none;">
 				<h2>Soporte</h2>
 			</a>
@@ -3111,7 +3196,16 @@ img {
 					<section class="tsd-index-section ">
 						<h3>Classes</h3>
 						<ul class="tsd-index-list">
+							<li class="tsd-kind-class"><a href="classes/Music.html" class="tsd-kind-icon">Music</a></li>
+							<li class="tsd-kind-class"><a href="classes/MusicSubscription.html" class="tsd-kind-icon">Music<wbr>Subscription</a></li>
+							<li class="tsd-kind-class"><a href="classes/Song.html" class="tsd-kind-icon">Song</a></li>
 							<li class="tsd-kind-class"><a href="classes/default.html" class="tsd-kind-icon">default</a></li>
+						</ul>
+					</section>
+					<section class="tsd-index-section ">
+						<h3>Interfaces</h3>
+						<ul class="tsd-index-list">
+							<li class="tsd-kind-interface"><a href="interfaces/SongData.html" class="tsd-kind-icon">Song<wbr>Data</a></li>
 						</ul>
 					</section>
 				</div>
@@ -3123,11 +3217,21 @@ img {
 				<div class="tsd-legend-group">
 					<ul class="tsd-legend">
 						<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
+						<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
 						<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
 					</ul>
 					<ul class="tsd-legend">
 						<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li>
 						<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li>
+					</ul>
+					<ul class="tsd-legend">
+						<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+					</ul>
+					<ul class="tsd-legend">
+						<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
+					</ul>
+					<ul class="tsd-legend">
+						<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
 					</ul>
 				</div>
 			</div>
