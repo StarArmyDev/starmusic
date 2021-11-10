@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import 'mocha';
 
-import StarMusic from '../src';
+import StarMusic from '..';
 
-describe('[index]', () => {
+describe('[Main]', () => {
     it('exports check', () => {
         expect(StarMusic).to.be.a('function');
     });
